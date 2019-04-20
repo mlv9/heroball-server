@@ -54,10 +54,6 @@ func (db *HeroBallDatabase) GetPlayer(context.Context, *pb.GetPlayerRequest) (*p
 	return nil, nil
 }
 
-func (db *HeroBallDatabase) GetTopAverageStats(context.Context, *pb.TopAverageStatsSelector) (*pb.TopAverageStatsResponse, error) {
-
-	return nil, nil
-}
 
 func (db *HeroBallDatabase) GetGamesOnDate(context.Context, *pb.GetGamesOnDateRequest) (*pb.GetGamesOnDateResponse, error) {
 
