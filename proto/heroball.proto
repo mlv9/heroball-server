@@ -1,0 +1,194 @@
+// Heroball Protobuf
+syntax = "proto3";
+
+package pb;
+
+message Player {
+  int32 PlayerId = 1;
+  string Name = 2;
+  string Position = 3;
+}
+
+message PlayerStats {
+  string Email = 2;
+  string Password = 3;
+  int64 CreatedTimestamp = 4;
+}
+
+message Competition {
+  int32 CompetitionId = 1;
+  string Name = 2;
+  string Division = 3;
+}
+
+message Team {
+  int32 TeamId = 1;
+  string Name = 2;
+}
+
+message Location {
+  int32 LocationId = 1;
+  string Name = 2;
+}
+
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+message Time {
+  int32 hour = 1;
+  int32 minute = 2;
+}
+
+message Game {
+  int32 GameId = 1;
+  map<int32, PlayerGameStats> PlayerStats = 2;
+  Team HomeTeam = 3;
+  Team AwayTeam = 4;
+  Location Location = 5;
+  Competition Competition = 6;
+  Date Date = 7;
+  Time Time = 8;
+}
+
+message Stats {
+  int32 StatsId = 1;
+  int32 TwoPointFGA = 2;
+  int32 TwoPointFGM = 3;
+  int32 ThreePointFMA = 4;
+  int32 ThreePointFGM = 5;
+  int32 FreeThrowsAttempted = 6;
+  int32 FreeThrowsMade = 7;
+  int32 OffensiveRebounds = 8;
+  int32 DefensiveRebounds = 9;
+  int32 Assists = 10;
+  int32 Blocks = 11;
+  int32 Steals = 12;
+  int32 Turnovers = 13;
+  int32 RegularFoulsForced = 14;
+  int32 RegularFoulsCommitted = 15;
+  int32 TechnicalFoulsCommitted = 16;
+  int32 MinutesPlayed = 17;
+}
+
+message PlayerGameStats {
+  int32 PlayerId = 1;
+  int32 GameId = 2;
+  int32 TeamId = 3;
+  Stats Stats = 4;
+}
+
+message PlayerAverageStats {
+  int32 PlayerId = 1;
+  repeated int32 GameIds = 2;
+  Stats Stats = 4;
+}
+
+message AverageStatsSelector {
+  int32 PlayerId = 1;
+  Date StartDate = 2;
+  Date EndDate = 3;
+  int32 TeamIdFor = 4;
+  int32 TeamIdAgainst = 5;
+  int32 CompetitionId = 6;
+}
+
+message GameStatsSelector {
+  int32 PlayerId = 1;
+  int32 GameId = 2;
+}
+
+message Empty {}
+
+message GetCompetitionsResponse {
+  repeated Competition Competitions = 1;
+}
+
+message GetTeamsForCompetitionResponse {
+  repeated Team Teams = 1;
+}
+
+message GetGamesForPlayerResponse {
+  repeated Game Games = 1;
+}
+
+message GetGamesForTeamResponse {
+  repeated Game Games = 1;
+}
+
+message GetTeamsForCompetitionRequest {
+  int32 CompetitionId = 1;
+}
+
+message GetTeamRequest {
+  int32 TeamId = 1;
+}
+
+message GetGamesForTeamRequest {
+  int32 TeamId = 1;
+  int32 CompetitionId = 2;
+}
+
+message GetPlayerRequest {
+  int32 PlayerId = 1;
+}
+
+message GetGameRequest {
+  int32 GameId = 1;
+}
+
+message GetGamesForPlayerRequest {
+  int32 GamesId = 1;
+  int32 TeamId = 2;
+}
+
+// message TopAverageStatsSelector {
+//   int32 Count = 1;
+//   repeated int32 PlayerIds = 2;
+//   repeated int32 GameIds = 3;
+//   repeated int32 TeamIds = 4;
+//   repeated int32 ComptitionIds = 5;
+// }
+
+// message TopAverageStatsResponse {
+//   repeated PlayerAverageStats TwoPointFGA = 1;
+//   repeated PlayerAverageStats TwoPointFGM = 2;
+//   repeated PlayerAverageStats ThreePointFMA = 3;
+//   repeated PlayerAverageStats ThreePointFGM = 4;
+//   repeated PlayerAverageStats FreeThrowsAttempted = 5;
+//   repeated PlayerAverageStats FreeThrowsMade = 6;
+//   repeated PlayerAverageStats OffensiveRebounds = 7;
+//   repeated PlayerAverageStats DefensiveRebounds = 8;
+//   repeated PlayerAverageStats Assists = 9;
+//   repeated PlayerAverageStats Blocks = 10;
+//   repeated PlayerAverageStats Steals = 11;
+//   repeated PlayerAverageStats Turnovers = 12;
+//   repeated PlayerAverageStats RegularFoulsForced = 13;
+//   repeated PlayerAverageStats RegularFoulsCommitted = 14;
+//   repeated PlayerAverageStats TechnicalFoulsCommitted = 15;
+// }
+
+message GetGamesOnDateRequest {
+  Date Date = 1;
+}
+
+message GetGamesOnDateResponse {
+  repeated Game Games = 1;
+}
+
+service HeroBallService {
+  rpc GetCompetitions(Empty) returns (GetCompetitionsResponse);
+  rpc GetTeamsForCompetition(GetTeamsForCompetitionRequest) returns (GetTeamsForCompetitionResponse);
+  rpc GetTeam(GetTeamRequest) returns (Team);
+  rpc GetGamesForTeam(GetGamesForTeamRequest) returns (GetGamesForTeamResponse);
+  rpc GetPlayer(GetPlayerRequest) returns (Player);
+  // rpc GetTopAverageStats(TopAverageStatsSelector) returns (TopAverageStatsResponse);
+  rpc GetGamesOnDate(GetGamesOnDateRequest) returns (GetGamesOnDateResponse);
+  rpc GetGame(GetPlayerRequest) returns (Game);
+  rpc GetGamesForPlayer(GetGamesForPlayerRequest) returns (GetGamesForPlayerResponse);
+  rpc GetPlayerGameStats(GameStatsSelector) returns (PlayerGameStats);
+  rpc GetPlayerAverageStats(AverageStatsSelector) returns (PlayerAverageStats);
+  rpc AddPlayerGameStats(PlayerGameStats) returns (Empty);
+}

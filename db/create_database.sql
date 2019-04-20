@@ -1,0 +1,92 @@
+CREATE TYPE playerposition AS ENUM(
+    'guard', 
+    'point-guard', 
+    'shooting-guard', 
+    'small-forward', 
+    'forward', 
+    'power-forward', 
+    'center');
+
+CREATE TABLE Competitions (
+    CompetitionId SERIAL PRIMARY KEY,
+    Name text NOT NULL,
+    SubCompetition text
+);
+
+CREATE TABLE Teams (
+    TeamId SERIAL PRIMARY KEY,
+    Name text NOT NULL
+);
+
+CREATE TABLE Locations (
+    LocationId SERIAL PRIMARY KEY,
+    Name text NOT NULL 
+);
+
+CREATE TABLE Players (
+    PlayerId SERIAL PRIMARY KEY,
+    Name text NOT NULL,
+    Position playerposition NOT NULL,
+    Email text NOT NULL,
+    YearStarted int,
+    Description text
+);
+
+CREATE TABLE PlayerTeams (
+    PlayerId SERIAL NOT NULL REFERENCES Players(PlayerId),
+    TeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+    JerseyNumber int NOT NULL
+);
+
+CREATE TABLE Stats (
+    StatsId SERIAL PRIMARY KEY,
+    TwoPointFGA int DEFAULT 0,
+    TwoPointFGM int DEFAULT 0,
+    ThreePointFGA int DEFAULT 0,
+    ThreePointFGM int DEFAULT 0,
+    FreeThrowsAttempted int DEFAULT 0,
+    FreeThrowsMade int DEFAULT 0,
+    OffensiveRebounds int DEFAULT 0,
+    DefensiveRebounds int DEFAULT 0,
+    Assists int DEFAULT 0,
+    Blocks int DEFAULT 0,
+    Steals int DEFAULT 0,
+    Turnovers int DEFAULT 0,
+    RegularFoulsForced int DEFAULT 0,
+    RegularFoulsCommitted int DEFAULT 0,
+    TechnicalFoulsCommitted int DEFAULT 0,
+    MinutesPlayed int DEFAULT 0
+);
+
+CREATE TABLE Games (
+    GameId SERIAL PRIMARY KEY,
+    CompetitionId SERIAL NOT NULL REFERENCES Competition(CompetitionId),
+    LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
+    HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+    AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+    GameDate DATE NOT NULL,
+    GameTime TIME NOT NULL
+);
+
+CREATE TABLE PlayerGames (
+  PlayerId SERIAL NOT NULL REFERENCES Players(PlayerId),
+  GameId SERIAL NOT NULL REFERENCES Games(GameId),
+  TeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+  StatsId SERIAL NOT NULL REFERENCES Stats(StatsId)
+);
+
+
+    -- SELECT
+    --     SUM(
+    --         SELECT 
+    --             COUNT(Stats.FreeThrowsMade), 
+    --             COUNT(Stats.TwoPointFGM) * 2, 
+    --             COUNT(Stats.ThreePointFGM) * 3
+    --         FROM 
+    --             PlayerGameStats
+    --             LEFT JOIN Stats ON PlayerGameStats.StatsId = Stats.StatsId
+    --             LEFT JOIN Players ON PlayGameStats.PlayerId = Players.PlayerId
+    --         WHERE
+    --             PlayerGameStats.GameId = $1 AND
+    --             Players.TeamId = $2
+    --     ) AS HomeTeam
