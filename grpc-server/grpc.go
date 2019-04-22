@@ -47,5 +47,14 @@ func (hb *HeroBall) Serve(address string) error {
 }
 
 func (hb *HeroBall) GetPlayerInfo(context context.Context, request *pb.GetPlayerInfoRequest) (*pb.PlayerInfo, error) {
-	return nil, nil
+
+	/* pass to database layer */
+	info, err := hb.db.GetPlayerInfo(request.GetPlayerId())
+
+	if err != nil {
+		log.Printf("Error getting player info: %v", err)
+		return nil, err
+	}
+
+	return info, nil
 }
