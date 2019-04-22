@@ -366,7 +366,6 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 			Competitions.CompetitionId,
 			Competitions.Name,
 			Competitions.SubCompetition,
-			(SELECT COUNT(*)
 			Games.GameTime	
 		FROM
 			Games
