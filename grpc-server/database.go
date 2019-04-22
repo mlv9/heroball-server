@@ -304,7 +304,7 @@ func (database *HeroBallDatabase) GetResultForGame(gameId int32) (*pb.GameResult
 		return nil, err
 	}
 
-	awayTeamPoints, err := database.GetPointsForTeamInGame(homeTeamId, gameId)
+	awayTeamPoints, err := database.GetPointsForTeamInGame(awayTeamId, gameId)
 
 	if err != nil {
 		return nil, err
@@ -332,7 +332,7 @@ func (database *HeroBallDatabase) GetPointsForTeamInGame(teamId int32, gameId in
 		GROUP BY
 			PlayerGames.GameId, PlayerGames.TeamId
 		HAVING 
-			PlayerGames.TeamId = $1 AND PlayerGames.GameId = $2`, teamId, gameId).Scan(&points)
+			PlayerGames.GameId = $2 AND PlayerGames.TeamId = $1`, teamId, gameId).Scan(&points)
 
 	if err != nil {
 		return 0, fmt.Errorf("Error getting points for team in game: %v", err)
