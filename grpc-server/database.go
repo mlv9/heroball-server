@@ -130,22 +130,22 @@ func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.St
 
 	err := database.db.QueryRow(`
 		SELECT
-			Stats.StatsId
-			Stats.TwoPointFGA
-			Stats.TwoPointFGM
-			Stats.ThreePointFGA 
-			Stats.ThreePointFGM 
-			Stats.FreeThrowsAttempted
-			Stats.FreeThrowsMade
-			Stats.OffensiveRebounds
-			Stats.DefensiveRebounds
-			Stats.Assists
-			Stats.Blocks
-			Stats.Steals
-			Stats.Turnovers
-			Stats.RegularFoulsForced
-			Stats.RegularFoulsCommitted
-			Stats.TechnicalFoulsCommitted
+			Stats.StatsId,
+			Stats.TwoPointFGA,
+			Stats.TwoPointFGM,
+			Stats.ThreePointFGA, 
+			Stats.ThreePointFGM,
+			Stats.FreeThrowsAttempted,
+			Stats.FreeThrowsMade,
+			Stats.OffensiveRebounds,
+			Stats.DefensiveRebounds,
+			Stats.Assists,
+			Stats.Blocks,
+			Stats.Steals,
+			Stats.Turnovers,
+			Stats.RegularFoulsForced,
+			Stats.RegularFoulsCommitted,
+			Stats.TechnicalFoulsCommitted,
 			Stats.MinutesPlayed
 		FROM
 			Players
