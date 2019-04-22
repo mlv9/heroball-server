@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	_ "github.com/lib/pq"
+
 	pb "github.com/heroballapp/server/protobuf"
 )
 
