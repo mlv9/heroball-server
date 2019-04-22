@@ -279,6 +279,68 @@ func (database *HeroBallDatabase) GetStats(statsId int32) (*pb.Stats, error) {
 	return stats, nil
 }
 
+func (database *HeroBallDatabase) GetResultForGame(gameId int32) (*pb.GameResult, error) {
+
+	if gameId <= 0 {
+		return nil, fmt.Errorf("Invalid gameId")
+	}
+
+	var homeTeamId int32
+	var awayTeamId int32
+
+	err := database.db.QueryRow(`
+		SELECT
+			HomeTeamId,
+			AwayTeamId
+		FROM
+			Games
+		WHERE GameId = $1
+	`, gameId).Scan(&homeTeamId, &awayTeamId)
+
+	/* now get the points for each */
+	homeTeamPoints, err := database.GetPointsForTeamInGame(homeTeamId, gameId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	awayTeamPoints, err := database.GetPointsForTeamInGame(homeTeamId, gameId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GameResult{
+		HomeTeamPoints: homeTeamPoints,
+		AwayTeamPoints: awayTeamPoints,
+	}, nil
+}
+
+func (database *HeroBallDatabase) GetPointsForTeamInGame(teamId int32, gameId int32) (int32, error) {
+
+	var points int32
+
+	err := database.db.QueryRow(`
+		SELECT
+			COALESCE(SUM(FreeThrowsMade),0) +
+			COALESCE(SUM(TwoPointFGM),0) * 2 +
+			COALESCE(SUM(ThreePointFGM),0) * 3
+		FROM 
+			Stats
+		LEFT JOIN PlayerGames ON 
+			Stats.StatsId = PlayerGames.StatsId
+		GROUP BY
+			PlayerGames.TeamId	
+		HAVING 
+			PlayerGames.TeamId = $1 AND PlayerGames.GameId = $2`, teamId, gameId).Scan(&points)
+
+	if err != nil {
+		return 0, fmt.Errorf("Error getting points for team in game: %v", err)
+	}
+
+	return points, nil
+}
+
 func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 
 	if gameId <= 0 {
@@ -304,6 +366,7 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 			Competitions.CompetitionId,
 			Competitions.Name,
 			Competitions.SubCompetition,
+			(SELECT COUNT(*)
 			Games.GameTime	
 		FROM
 			Games
@@ -334,8 +397,17 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 	}
 
 	if err != nil {
+		return nil, fmt.Errorf("Error in db: %v")
+	}
+
+	/* get the game result */
+	result, err := database.GetResultForGame(gameId)
+
+	if err != nil {
 		return nil, err
 	}
+
+	game.Result = result
 
 	return game, nil
 }
