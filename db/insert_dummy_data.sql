@@ -37,9 +37,8 @@ INSERT INTO Games (
     LocationId, 
     HomeTeamId, 
     AwayTeamId, 
-    GameDate, 
     GameTime
-) VALUES (1,1,1,1,'2019-3-20','14:30:00');
+) VALUES (1,1,1,1,'2019-3-20'::timestamp);
 
 INSERT INTO PlayerGames (PlayerId, GameId, TeamId, StatsId, JerseyNumber)
     VALUES (1, 1, 1, 1, 9);
