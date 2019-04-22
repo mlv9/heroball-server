@@ -35,11 +35,11 @@ CREATE TABLE Players (
 CREATE TABLE Stats (
     StatsId SERIAL PRIMARY KEY,
     TwoPointFGA int DEFAULT 0,
-    TwoPointFGM int DEFAULT 0,
+    TwoPointFGM int DEFAULT 0 CHECK (TwoPointFGA >= TwoPointFGM),
     ThreePointFGA int DEFAULT 0,
-    ThreePointFGM int DEFAULT 0,
+    ThreePointFGM int DEFAULT 0 CHECK (ThreePointFGA >= ThreePointFGM),
     FreeThrowsAttempted int DEFAULT 0,
-    FreeThrowsMade int DEFAULT 0,
+    FreeThrowsMade int DEFAULT 0 CHECK (FreeThrowsAttempted >= FreeThrowsMade),
     OffensiveRebounds int DEFAULT 0,
     DefensiveRebounds int DEFAULT 0,
     Assists int DEFAULT 0,
@@ -47,8 +47,8 @@ CREATE TABLE Stats (
     Steals int DEFAULT 0,
     Turnovers int DEFAULT 0,
     RegularFoulsForced int DEFAULT 0,
-    RegularFoulsCommitted int DEFAULT 0,
-    TechnicalFoulsCommitted int DEFAULT 0,
+    RegularFoulsCommitted int DEFAULT 0 CHECK (5 >= RegularFoulsCommitted),
+    TechnicalFoulsCommitted int DEFAULT 0 CHECK (2 >= TechnicalFoulsCommitted),
     MinutesPlayed int DEFAULT 0
 );
 
