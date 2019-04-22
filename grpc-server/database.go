@@ -266,7 +266,7 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 			Locations.Name,
 			Competitions.CompetitionId,
 			Competitions.Name,
-			Games.Datetime	
+			Games.GameTime	
 		FROM
 			Games
 		LEFT JOIN
@@ -288,7 +288,7 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 		&game.Location.Name,
 		&game.Competition.CompetitionId,
 		&game.Competition.Name,
-		&game.Datetime)
+		&game.GameTime)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("That gameId does not exist")

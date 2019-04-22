@@ -58,8 +58,7 @@ CREATE TABLE Games (
     LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
     HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
     AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
-    GameDate DATE NOT NULL,
-    GameTime TIME NOT NULL
+    GameTime TIMESTAMP NOT NULL
 );
 
 CREATE TABLE PlayerGames (
