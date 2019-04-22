@@ -330,7 +330,7 @@ func (database *HeroBallDatabase) GetPointsForTeamInGame(teamId int32, gameId in
 		LEFT JOIN PlayerGames ON 
 			Stats.StatsId = PlayerGames.StatsId
 		GROUP BY
-			PlayerGames.TeamId	
+			PlayerGames.GameId, PlayerGames.TeamId
 		HAVING 
 			PlayerGames.TeamId = $1 AND PlayerGames.GameId = $2`, teamId, gameId).Scan(&points)
 
