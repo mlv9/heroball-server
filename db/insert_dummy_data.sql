@@ -1,19 +1,17 @@
 INSERT INTO Competitions (Name, SubCompetition) VALUES
-    ("Fredcom", "B Division"),
-    ("Fredcom", "A Division");
+    ('Fredcom', 'B Division'),
+    ('Fredcom', 'A Division');
 
 INSERT INTO Teams (Name) VALUES
-    ("Cannons"),
-    ("Owls");
+    ('Cannons'),
+    ('Owls');
 
 INSERT INTO Locations (Name) VALUES
-    ("AIS");
+    ('AIS');
 
 INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES
-    ("Matthew", 'guard', "something@email.com", 1998, "Some Description");
-
-INSERT INTO PlayerTeams (PlayerId, TeamId, JerseyNumber) VALUES
-    (1, 1, 9);
+    ('Steven', 'center', 'something2@email.com', 1999, 'Some Description For Steven'),
+    ('Matthew', 'guard', 'something@email.com', 1998, 'Some Description');
 
 INSERT INTO Stats (
     TwoPointFGA,

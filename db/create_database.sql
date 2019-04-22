@@ -32,12 +32,6 @@ CREATE TABLE Players (
     Description text
 );
 
-CREATE TABLE PlayerTeams (
-    PlayerId SERIAL NOT NULL REFERENCES Players(PlayerId),
-    TeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
-    JerseyNumber int NOT NULL
-);
-
 CREATE TABLE Stats (
     StatsId SERIAL PRIMARY KEY,
     TwoPointFGA int DEFAULT 0,
@@ -72,5 +66,6 @@ CREATE TABLE PlayerGames (
   PlayerId SERIAL NOT NULL REFERENCES Players(PlayerId),
   GameId SERIAL NOT NULL REFERENCES Games(GameId),
   TeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
-  StatsId SERIAL NOT NULL REFERENCES Stats(StatsId)
+  StatsId SERIAL NOT NULL REFERENCES Stats(StatsId),
+  JerseyNumber int NOT NULL
 );
