@@ -1,4 +1,4 @@
-package heroball
+package main
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type HeroBall struct {
 	db *HeroBallDatabase
 }
 
-func NewHeroBallService(address string, dbstring string) (*HeroBall, error) {
+func NewHeroBallService(dbstring string) (*HeroBall, error) {
 
 	db, err := NewHeroBallDatabase(dbstring)
 

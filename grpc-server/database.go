@@ -1,4 +1,4 @@
-package heroball
+package main
 
 import (
 	"database/sql"
