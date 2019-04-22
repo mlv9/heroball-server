@@ -60,7 +60,7 @@ CREATE TABLE Stats (
 
 CREATE TABLE Games (
     GameId SERIAL PRIMARY KEY,
-    CompetitionId SERIAL NOT NULL REFERENCES Competition(CompetitionId),
+    CompetitionId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
     LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
     HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
     AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
@@ -74,19 +74,3 @@ CREATE TABLE PlayerGames (
   TeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
   StatsId SERIAL NOT NULL REFERENCES Stats(StatsId)
 );
-
-
-    -- SELECT
-    --     SUM(
-    --         SELECT 
-    --             COUNT(Stats.FreeThrowsMade), 
-    --             COUNT(Stats.TwoPointFGM) * 2, 
-    --             COUNT(Stats.ThreePointFGM) * 3
-    --         FROM 
-    --             PlayerGameStats
-    --             LEFT JOIN Stats ON PlayerGameStats.StatsId = Stats.StatsId
-    --             LEFT JOIN Players ON PlayGameStats.PlayerId = Players.PlayerId
-    --         WHERE
-    --             PlayerGameStats.GameId = $1 AND
-    --             Players.TeamId = $2
-    --     ) AS HomeTeam
