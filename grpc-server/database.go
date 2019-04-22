@@ -42,6 +42,45 @@ func (database *HeroBallDatabase) connect() error {
 	return nil
 }
 
+func (database *HeroBallDatabase) GetGameInfo(gameId int32) (*pb.GameInfo, error) {
+
+	if gameId <= 0 {
+		return nil, fmt.Errorf("Invalid gameId")
+	}
+
+	gameInfo := &pb.GameInfo{}
+
+	game, err := database.GetGame(gameId)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting game: %v", err)
+	}
+
+	/* get players in the game */
+	playerIds, err := database.GetPlayersInGame(gameId)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting players in game: %v", err)
+	}
+
+	players := make([]*pb.PlayerGameStats, 0)
+
+	for _, playerId := range playerIds {
+		playerStat, err := database.GetPlayerGameStats(playerId, gameId)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error getting player stats: %v", err)
+		}
+
+		players = append(players, playerStat)
+	}
+
+	gameInfo.Game = game
+	gameInfo.PlayerStats = players
+
+	return gameInfo, nil
+}
+
 func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo, error) {
 
 	if playerId <= 0 {
@@ -297,6 +336,55 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 	}
 
 	return game, nil
+}
+
+func (database *HeroBallDatabase) GetPlayersInGame(gameId int32) ([]int32, error) {
+
+	if gameId <= 0 {
+		return nil, fmt.Errorf("Invalid gameId")
+	}
+
+	playerIds := make([]int32, 0)
+
+	rows, err := database.db.Query(`
+		SELECT
+			PlayerId
+		FROM
+			PlayerGames
+		WHERE
+			GameId = $1
+			`,
+		gameId)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("That gameId does not exist")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+
+		var playerId int32
+
+		/* now to scan them all */
+		err = rows.Scan(&playerId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		playerIds = append(playerIds, playerId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return playerIds, nil
 }
 
 /* takes a playerId, return an array of recent games, up to maxnumber */

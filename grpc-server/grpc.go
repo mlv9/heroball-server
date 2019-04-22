@@ -59,15 +59,15 @@ func (hb *HeroBall) GetPlayerInfo(context context.Context, request *pb.GetPlayer
 	return info, nil
 }
 
-// func (hb *HeroBall) GetGameInfo(context context.Context, request *pb.GetPlayerInfoRequest) (*pb.GameInfo, error) {
+func (hb *HeroBall) GetGameInfo(context context.Context, request *pb.GetGameInfoRequest) (*pb.GameInfo, error) {
 
-// 	/* pass to database layer */
-// 	info, err := hb.db.GetGameInfo(request.GetGameId())
+	/* pass to database layer */
+	info, err := hb.db.GetGameInfo(request.GetGameId())
 
-// 	if err != nil {
-// 		log.Printf("Error getting game info: %v", err)
-// 		return nil, err
-// 	}
+	if err != nil {
+		log.Printf("Error getting game info: %v", err)
+		return nil, err
+	}
 
-// 	return info, nil
-// }
+	return info, nil
+}
