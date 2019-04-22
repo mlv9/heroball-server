@@ -270,9 +270,9 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 		FROM
 			Games
 		LEFT JOIN
-			Teams HomeTeams ON Games.HomeTeamId = Teams.TeamId
+			Teams HomeTeams ON Games.HomeTeamId = HomeTeams.TeamId
 		LEFT JOIN
-			Teams AwayTeams ON Games.AwayTeamId = Teams.TeamId			
+			Teams AwayTeams ON Games.AwayTeamId = AwayTeams.TeamId			
 		LEFT JOIN
 			Locations ON Games.LocationId = Locations.LocationId
 		LEFT JOIN
