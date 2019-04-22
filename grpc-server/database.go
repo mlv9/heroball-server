@@ -249,7 +249,11 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 	}
 
 	game := &pb.Game{
-		GameId: gameId,
+		GameId:      gameId,
+		HomeTeam:    &pb.Team{},
+		AwayTeam:    &pb.Team{},
+		Location:    &pb.Location{},
+		Competition: &pb.Competition{},
 	}
 
 	err := database.db.QueryRow(`
@@ -269,9 +273,9 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 			Teams HomeTeams ON Games.HomeTeamId = Teams.TeamId
 		LEFT JOIN
 			Teams AwayTeams ON Games.AwayTeamId = Teams.TeamId			
-		OUTER JOIN
+		LEFT JOIN
 			Locations ON Games.LocationId = Locations.LocationId
-		OUTER JOIN
+		LEFT JOIN
 			Competitions ON Games.CompetitionId = Competitions.CompetitionId
 		WHERE
 			GameId = $1`,
