@@ -208,7 +208,7 @@ func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int3
 	}
 
 	/* get stats */
-	stats, err := database.GetPlayerStats(statsId)
+	stats, err := database.GetStats(statsId)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting player stats: %v", err)
@@ -223,9 +223,9 @@ func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int3
 	return pgStats, nil
 }
 
-func (database *HeroBallDatabase) GetPlayerStats(statsId int32) (*pb.PlayerStats, error) {
+func (database *HeroBallDatabase) GetStats(statsId int32) (*pb.Stats, error) {
 
-	stats := &pb.PlayerStats{}
+	stats := &pb.Stats{}
 
 	err := database.db.QueryRow(`
 		SELECT
