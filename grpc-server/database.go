@@ -150,7 +150,9 @@ func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.St
 		FROM
 			Players
 		LEFT JOIN
-			PlayerGames ON PlayerGames.StatsId = Stats.StatsId
+			PlayerGames ON PlayerGames.PlayerId = Players.PlayerId
+		LEFT JOIN
+			Stats ON PlayerGames.StatsId = Stats.StatsId
 		WHERE
 			PlayerGames.PlayerId = $1 AND PlayerGames.GameId = $2`,
 		playerId, gameId).Scan(
