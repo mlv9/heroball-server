@@ -303,6 +303,7 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 			Locations.Name,
 			Competitions.CompetitionId,
 			Competitions.Name,
+			Competitions.SubCompetition,
 			Games.GameTime	
 		FROM
 			Games
@@ -325,6 +326,7 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 		&game.Location.Name,
 		&game.Competition.CompetitionId,
 		&game.Competition.Name,
+		&game.Competition.SubCompetition,
 		&game.GameTime)
 
 	if err == sql.ErrNoRows {
