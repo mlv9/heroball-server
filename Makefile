@@ -1,4 +1,4 @@
 all:
 	make -C db
-	make -C grpc-service
+	make -C grpc-server
 	make -C grpc-gateway
