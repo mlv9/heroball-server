@@ -49,8 +49,8 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 	}
 
 	info := &pb.PlayerInfo{
-		PlayerId:        playerId,
-		RecentGameStats: make([]*pb.PlayerGameStats, 0),
+		PlayerId:    playerId,
+		RecentGames: make([]*pb.PlayerGame, 0),
 	}
 
 	profile, err := database.GetPlayerProfile(playerId)
@@ -68,13 +68,13 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 	}
 
 	for _, gameId := range gameIds {
-		game, err := database.GetPlayerGameStats(playerId, gameId)
+		game, err := database.GetPlayerGame(playerId, gameId)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error getting player game stats: %v", err)
 		}
 
-		info.RecentGameStats = append(info.RecentGameStats, game)
+		info.RecentGames = append(info.RecentGames, game)
 
 	}
 
@@ -116,7 +116,29 @@ func (database *HeroBallDatabase) GetPlayerProfile(playerId int32) (*pb.PlayerPr
 	return profile, nil
 }
 
-func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.Stats, error) {
+func (database *HeroBallDatabase) GetPlayerGame(playerId int32, gameId int32) (*pb.PlayerGame, error) {
+
+	/* get stats to begin with */
+	pgStats, err := database.GetPlayerGameStats(playerId, gameId)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting player game stats: %v", err)
+	}
+
+	/* get the game */
+	game, err := database.GetGame(gameId)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting game: %v", err)
+	}
+
+	return &pb.PlayerGame{
+		Game:  game,
+		Stats: pgStats,
+	}, nil
+}
+
+func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -126,7 +148,45 @@ func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.St
 		return nil, fmt.Errorf("Invalid gameId")
 	}
 
-	stats := &pb.Stats{}
+	/* TODO QUERY get team and statsId */
+	var teamId int32
+	var statsId int32
+
+	err := database.db.QueryRow(`
+		SELECT
+			TeamId,
+			StatsId
+		FROM
+			PlayerGames
+		WHERE PlayerId = $1 AND GameId = $2`, playerId, gameId).Scan(&teamId, &statsId)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("That player did not play in the game")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	/* get stats */
+	stats, err := database.GetPlayerStats(statsId)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting player stats: %v", err)
+	}
+
+	pgStats := &pb.PlayerGameStats{
+		PlayerId: playerId,
+		TeamId:   teamId,
+		Stats:    stats,
+	}
+
+	return pgStats, nil
+}
+
+func (database *HeroBallDatabase) GetPlayerStats(statsId int32) (*pb.PlayerStats, error) {
+
+	stats := &pb.PlayerStats{}
 
 	err := database.db.QueryRow(`
 		SELECT
@@ -148,14 +208,9 @@ func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.St
 			Stats.TechnicalFoulsCommitted,
 			Stats.MinutesPlayed
 		FROM
-			Players
-		LEFT JOIN
-			PlayerGames ON PlayerGames.PlayerId = Players.PlayerId
-		LEFT JOIN
-			Stats ON PlayerGames.StatsId = Stats.StatsId
-		WHERE
-			PlayerGames.PlayerId = $1 AND PlayerGames.GameId = $2`,
-		playerId, gameId).Scan(
+			Stats
+		WHERE StatsId = $1`,
+		statsId).Scan(
 		&stats.StatsId,
 		&stats.TwoPointFGA,
 		&stats.TwoPointFGM,
@@ -175,7 +230,7 @@ func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.St
 		&stats.MinutesPlayed)
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("That player/game combination does not exist")
+		return nil, fmt.Errorf("That statsId does not exist")
 	}
 
 	if err != nil {
@@ -183,63 +238,6 @@ func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.St
 	}
 
 	return stats, nil
-}
-
-func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
-
-	if playerId <= 0 {
-		return nil, fmt.Errorf("Invalid playerId")
-	}
-
-	if playerId <= 0 {
-		return nil, fmt.Errorf("Invalid gameId")
-	}
-
-	pgStats := &pb.PlayerGameStats{}
-
-	stats, err := database.GetStats(playerId, gameId)
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting game stats: %v", err)
-	}
-
-	pgStats.Stats = stats
-
-	game, err := database.GetGame(gameId)
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting game: %v", err)
-	}
-
-	pgStats.Game = game
-
-	if err != nil {
-		return nil, err
-	}
-
-	/* get the team info */
-	pgStats.PlayerId = playerId
-
-	var teamId int32
-
-	err = database.db.QueryRow(`
-		SELECT
-			TeamId
-		FROM
-			PlayerGames
-		WHERE PlayerId = $1 AND GameId = $2`, playerId, gameId).Scan(&teamId)
-
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("That player did not play in the game")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	pgStats.TeamId = teamId
-
-	return pgStats, nil
 }
 
 func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
