@@ -324,7 +324,7 @@ func (database *HeroBallDatabase) GetRecentPlayerGames(playerId int32, maxCount 
 		WHERE
 			PlayerGames.PlayerId = $1
 		ORDER BY
-			Games.GameDate DESC
+			Games.GameTime DESC
 		LIMIT $2
 			`,
 		playerId, maxCount)
