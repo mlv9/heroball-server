@@ -310,7 +310,7 @@ func (database *HeroBallDatabase) GetRecentPlayerGames(playerId int32, maxCount 
 
 	rows, err := database.db.Query(`
 		SELECT
-			GameId
+			Games.GameId
 		FROM
 			Games
 		LEFT JOIN
