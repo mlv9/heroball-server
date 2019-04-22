@@ -1,0 +1,35 @@
+
+version: '3'
+services:
+  gateway:
+    image: heroball-gateway:latest
+    volumes:
+    - /etc/letsencrypt/:/etc/letsencrypt/
+    ports:
+    - "443:443"
+    links:
+    - grpc-server
+
+  grpc-server:
+    image: heroball-grpc:latest
+    expose:
+    - "8000"
+    environment:
+      POSTGRES_DBNAME: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_HOST: "db"
+      GRPC_BIND_ADDR: ":8000"
+
+  db:
+    image: heroball-db:latest
+    expose: 
+    - "5432"
+    links:
+    - grpc-server
+    volumes:
+    -  postgres-db:/var/lib/postgresql/data
+
+volumes:
+  postgres-db:
+

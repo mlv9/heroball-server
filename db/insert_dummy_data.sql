@@ -1,8 +1,10 @@
 INSERT INTO Competitions (Name, SubCompetition) VALUES
-    ("Fredcom", "B Division");
+    ("Fredcom", "B Division"),
+    ("Fredcom", "A Division");
 
 INSERT INTO Teams (Name) VALUES
-    ("Cannons");
+    ("Cannons"),
+    ("Owls");
 
 INSERT INTO Locations (Name) VALUES
     ("AIS");
@@ -39,7 +41,7 @@ INSERT INTO Games (
     AwayTeamId, 
     GameDate, 
     GameTime
-) VALUES (1,1,1,1,'2019-3-20','02:03:04');
+) VALUES (1,1,1,1,'2019-3-20','14:30:00');
 
 INSERT INTO PlayerGames (PlayerId, GameId, TeamId, StatsId)
     VALUES (1, 1, 1, 1);
