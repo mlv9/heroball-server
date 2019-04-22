@@ -297,6 +297,14 @@ func (database *HeroBallDatabase) GetResultForGame(gameId int32) (*pb.GameResult
 		WHERE GameId = $1
 	`, gameId).Scan(&homeTeamId, &awayTeamId)
 
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("This game has no result")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting teams in game: %v", err)
+	}
+
 	/* now get the points for each */
 	homeTeamPoints, err := database.GetPointsForTeamInGame(homeTeamId, gameId)
 
@@ -333,6 +341,10 @@ func (database *HeroBallDatabase) GetPointsForTeamInGame(teamId int32, gameId in
 			PlayerGames.GameId, PlayerGames.TeamId
 		HAVING 
 			PlayerGames.GameId = $2 AND PlayerGames.TeamId = $1`, teamId, gameId).Scan(&points)
+
+	if err == sql.ErrNoRows {
+		return 0, fmt.Errorf("This game is invalid")
+	}
 
 	if err != nil {
 		return 0, fmt.Errorf("Error getting points for team in game: %v", err)
