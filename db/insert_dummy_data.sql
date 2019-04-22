@@ -41,5 +41,5 @@ INSERT INTO Games (
     GameTime
 ) VALUES (1,1,1,1,'2019-3-20','14:30:00');
 
-INSERT INTO PlayerGames (PlayerId, GameId, TeamId, StatsId)
-    VALUES (1, 1, 1, 1);
+INSERT INTO PlayerGames (PlayerId, GameId, TeamId, StatsId, JerseyNumber)
+    VALUES (1, 1, 1, 1, 9);
