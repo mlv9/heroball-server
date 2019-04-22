@@ -17,15 +17,21 @@ const (
 )
 
 func NewHeroBallDatabase(connStr string) (*HeroBallDatabase, error) {
-	return &HeroBallDatabase{}, nil
+
+	db := &HeroBallDatabase{
+		connectionString: connStr,
+	}
+
+	err := db.connect()
+
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
-func (database *HeroBallDatabase) Connect(connStr string, db *sql.DB) error {
-	if db != nil {
-		database.db = db
-		return nil
-	}
-	database.connectionString = connStr
+func (database *HeroBallDatabase) connect() error {
+
 	db, err := sql.Open("postgres", database.connectionString)
 	if err != nil {
 		return err
@@ -34,7 +40,7 @@ func (database *HeroBallDatabase) Connect(connStr string, db *sql.DB) error {
 	return nil
 }
 
-func (db *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo, error) {
+func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -45,7 +51,7 @@ func (db *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo, error
 		RecentGameStats: make([]*pb.PlayerGameStats, 0),
 	}
 
-	profile, err := db.GetPlayerProfile(playerId)
+	profile, err := database.GetPlayerProfile(playerId)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting player profile: %v", err)
@@ -53,14 +59,14 @@ func (db *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo, error
 
 	info.Profile = profile
 
-	gameIds, err := db.GetRecentPlayerGames(playerId, recentGameCount)
+	gameIds, err := database.GetRecentPlayerGames(playerId, recentGameCount)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting recent games for player: %v", err)
 	}
 
 	for _, gameId := range gameIds {
-		game, err := db.GetPlayerGameStats(playerId, gameId)
+		game, err := database.GetPlayerGameStats(playerId, gameId)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error getting player game stats: %v", err)
@@ -73,7 +79,7 @@ func (db *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo, error
 	return info, nil
 }
 
-func (db *HeroBallDatabase) GetPlayerProfile(playerId int32) (*pb.PlayerProfile, error) {
+func (database *HeroBallDatabase) GetPlayerProfile(playerId int32) (*pb.PlayerProfile, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -81,7 +87,7 @@ func (db *HeroBallDatabase) GetPlayerProfile(playerId int32) (*pb.PlayerProfile,
 
 	profile := &pb.PlayerProfile{}
 
-	err := db.db.QueryRow(`
+	err := database.db.QueryRow(`
 		SELECT
 			Name,
 			YearStarted,
@@ -108,7 +114,7 @@ func (db *HeroBallDatabase) GetPlayerProfile(playerId int32) (*pb.PlayerProfile,
 	return profile, nil
 }
 
-func (db *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.Stats, error) {
+func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.Stats, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -120,7 +126,7 @@ func (db *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.Stats, e
 
 	stats := &pb.Stats{}
 
-	err := db.db.QueryRow(`
+	err := database.db.QueryRow(`
 		SELECT
 			Stats.StatsId
 			Stats.TwoPointFGA
@@ -175,7 +181,7 @@ func (db *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.Stats, e
 	return stats, nil
 }
 
-func (db *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
+func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -187,7 +193,7 @@ func (db *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*p
 
 	pgStats := &pb.PlayerGameStats{}
 
-	stats, err := db.GetStats(playerId, gameId)
+	stats, err := database.GetStats(playerId, gameId)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game stats: %v", err)
@@ -195,7 +201,7 @@ func (db *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*p
 
 	pgStats.Stats = stats
 
-	game, err := db.GetGame(gameId)
+	game, err := database.GetGame(gameId)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game: %v", err)
@@ -212,7 +218,7 @@ func (db *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*p
 
 	var teamId int32
 
-	err = db.db.QueryRow(`
+	err = database.db.QueryRow(`
 		SELECT
 			TeamId
 		FROM
@@ -232,7 +238,7 @@ func (db *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*p
 	return pgStats, nil
 }
 
-func (db *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
+func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 
 	if gameId <= 0 {
 		return nil, fmt.Errorf("Invalid gameId")
@@ -242,7 +248,7 @@ func (db *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 		GameId: gameId,
 	}
 
-	err := db.db.QueryRow(`
+	err := database.db.QueryRow(`
 		SELECT
 			HomeTeams.TeamId,
 			HomeTeams.Name,
@@ -288,7 +294,7 @@ func (db *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 }
 
 /* takes a playerId, return an array of recent games, up to maxnumber */
-func (db *HeroBallDatabase) GetRecentPlayerGames(playerId int32, maxCount int32) ([]int32, error) {
+func (database *HeroBallDatabase) GetRecentPlayerGames(playerId int32, maxCount int32) ([]int32, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -300,7 +306,7 @@ func (db *HeroBallDatabase) GetRecentPlayerGames(playerId int32, maxCount int32)
 
 	gameIds := make([]int32, 0)
 
-	rows, err := db.db.Query(`
+	rows, err := database.db.Query(`
 		SELECT
 			GameId
 		FROM
