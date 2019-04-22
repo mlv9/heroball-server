@@ -16,12 +16,12 @@ INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES
     ('Matthew', 'guard', 'something@email.com', 1998, 'Some Description');
 
 INSERT INTO Stats (
-    TwoPointFGA,
     TwoPointFGM,
-    ThreePointFGA,
+    TwoPointFGA,
     ThreePointFGM,
-    FreeThrowsAttempted,
+    ThreePointFGA,
     FreeThrowsMade,
+    FreeThrowsAttempted,
     OffensiveRebounds,
     DefensiveRebounds,
     Assists,
