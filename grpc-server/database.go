@@ -100,10 +100,10 @@ func (database *HeroBallDatabase) GetPlayerProfile(playerId int32) (*pb.PlayerPr
 		WHERE
 			PlayerId = $1`,
 		playerId).Scan(
-		profile.Name,
-		profile.YearStarted,
-		profile.Position,
-		profile.Description)
+		&profile.Name,
+		&profile.YearStarted,
+		&profile.Position,
+		&profile.Description)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("That playerId does not exist")
@@ -154,23 +154,23 @@ func (database *HeroBallDatabase) GetStats(playerId int32, gameId int32) (*pb.St
 		WHERE
 			PlayerGames.PlayerId = $1 AND PlayerGames.GameId = $2`,
 		playerId, gameId).Scan(
-		stats.StatsId,
-		stats.TwoPointFGA,
-		stats.TwoPointFGM,
-		stats.ThreePointFGA,
-		stats.ThreePointFGM,
-		stats.FreeThrowsAttempted,
-		stats.FreeThrowsMade,
-		stats.OffensiveRebounds,
-		stats.DefensiveRebounds,
-		stats.Assists,
-		stats.Blocks,
-		stats.Steals,
-		stats.Turnovers,
-		stats.RegularFoulsForced,
-		stats.RegularFoulsCommitted,
-		stats.TechnicalFoulsCommitted,
-		stats.MinutesPlayed)
+		&stats.StatsId,
+		&stats.TwoPointFGA,
+		&stats.TwoPointFGM,
+		&stats.ThreePointFGA,
+		&stats.ThreePointFGM,
+		&stats.FreeThrowsAttempted,
+		&stats.FreeThrowsMade,
+		&stats.OffensiveRebounds,
+		&stats.DefensiveRebounds,
+		&stats.Assists,
+		&stats.Blocks,
+		&stats.Steals,
+		&stats.Turnovers,
+		&stats.RegularFoulsForced,
+		&stats.RegularFoulsCommitted,
+		&stats.TechnicalFoulsCommitted,
+		&stats.MinutesPlayed)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("That player/game combination does not exist")
@@ -274,15 +274,15 @@ func (database *HeroBallDatabase) GetGame(gameId int32) (*pb.Game, error) {
 		WHERE
 			GameId = $1`,
 		gameId).Scan(
-		game.HomeTeam.TeamId,
-		game.HomeTeam.Name,
-		game.AwayTeam.TeamId,
-		game.AwayTeam.Name,
-		game.Location.LocationId,
-		game.Location.Name,
-		game.Competition.CompetitionId,
-		game.Competition.Name,
-		game.Datetime)
+		&game.HomeTeam.TeamId,
+		&game.HomeTeam.Name,
+		&game.AwayTeam.TeamId,
+		&game.AwayTeam.Name,
+		&game.Location.LocationId,
+		&game.Location.Name,
+		&game.Competition.CompetitionId,
+		&game.Competition.Name,
+		&game.Datetime)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("That gameId does not exist")
