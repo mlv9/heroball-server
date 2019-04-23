@@ -268,7 +268,6 @@ func (database *HeroBallDatabase) getStatsTotals(statsIds []int32) (*pb.Stats, e
 
 	rows, err := database.db.Query(`
 		SELECT
-			Stats.StatsId,
 			Stats.TwoPointFGA,
 			Stats.TwoPointFGM,
 			Stats.ThreePointFGA, 
