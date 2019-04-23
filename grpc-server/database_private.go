@@ -502,15 +502,13 @@ func (database *HeroBallDatabase) getRecentCompetitionGames(competitionId int32,
 
 	rows, err := database.db.Query(`
 		SELECT
-			Games.GameId
+			GameId
 		FROM
 			Games
-		LEFT JOIN
-			PlayerGames ON PlayerGames.GameId = Games.GameId
 		WHERE
-			PlayerGames.CompetitionId = $1
+			Games.CompetitionId = $1
 		ORDER BY
-			Games.GameTime DESC
+			GameTime DESC
 		LIMIT $2
 			`,
 		competitionId, maxCount)
