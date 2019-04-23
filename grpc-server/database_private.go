@@ -328,7 +328,7 @@ func (database *HeroBallDatabase) getGame(gameId int32) (*pb.Game, error) {
 			AwayTeams.Name,
 			Locations.LocationId,
 			Locations.Name,
-			Games.CompetitionId
+			Games.CompetitionId,
 			Games.GameTime	
 		FROM
 			Games
