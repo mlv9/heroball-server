@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/lib/pq"
+
 	pb "github.com/heroballapp/server/protobuf"
 )
 
@@ -655,7 +657,7 @@ func (database *HeroBallDatabase) getTeams(teamIds []int32) ([]*pb.Team, error) 
 			Teams
 		WHERE
 			TeamId = IN($1)
-	`, teamIds)
+	`, pq.Array(teamIds))
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("Teams do not exist")
@@ -702,7 +704,7 @@ func (database *HeroBallDatabase) getLocations(locationIds []int32) ([]*pb.Locat
 			Locations
 		WHERE
 			LocationId = IN($1)
-	`, locationIds)
+	`, pq.Array(locationIds))
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("Locations do not exist")
