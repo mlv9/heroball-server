@@ -84,3 +84,16 @@ func (hb *HeroBall) GetGameInfo(context context.Context, request *pb.GetGameInfo
 
 	return info, nil
 }
+
+func (hb *HeroBall) GetTeamInfo(context context.Context, request *pb.GetTeamInfoRequest) (*pb.TeamInfo, error) {
+
+	/* pass to database layer */
+	info, err := hb.db.GetTeamInfo(request.GetTeamId())
+
+	if err != nil {
+		log.Printf("Error getting team info: %v", err)
+		return nil, err
+	}
+
+	return info, nil
+}
