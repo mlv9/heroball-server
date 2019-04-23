@@ -59,6 +59,19 @@ func (hb *HeroBall) GetPlayerInfo(context context.Context, request *pb.GetPlayer
 	return info, nil
 }
 
+func (hb *HeroBall) GetCompetitionInfo(context context.Context, request *pb.GetCompetitionInfoRequest) (*pb.CompetitionInfo, error) {
+
+	/* pass to database layer */
+	info, err := hb.db.GetCompetitionInfo(request.GetCompetitionId())
+
+	if err != nil {
+		log.Printf("Error getting competition info: %v", err)
+		return nil, err
+	}
+
+	return info, nil
+}
+
 func (hb *HeroBall) GetGameInfo(context context.Context, request *pb.GetGameInfoRequest) (*pb.GameInfo, error) {
 
 	/* pass to database layer */
