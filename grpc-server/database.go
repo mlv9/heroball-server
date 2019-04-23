@@ -177,6 +177,37 @@ func (database *HeroBallDatabase) GetPlayerGame(playerId int32, gameId int32) (*
 	}, nil
 }
 
+func (database *HeroBallDatabase) GetPlayer(playerId int32) (*pb.Player, error) {
+
+	if playerId <= 0 {
+		return nil, fmt.Errorf("Invalid playerId")
+	}
+
+	player := &pb.Player{
+		PlayerId: playerId,
+	}
+
+	err := database.db.QueryRow(`
+		SELECT
+			Name,
+			Position
+		FROM 
+			Players
+		WHERE
+			PlayerId = $1
+		`, playerId).Scan(&player.Name, &player.Position)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("That player does not exist")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error in db: %v", err)
+	}
+
+	return player, nil
+}
+
 func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
 
 	if playerId <= 0 {
@@ -204,6 +235,13 @@ func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int3
 	}
 
 	if err != nil {
+		return nil, fmt.Errorf("Error in db: %v", err)
+	}
+
+	/* get player */
+	player, err := database.GetPlayer(playerId)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -215,9 +253,9 @@ func (database *HeroBallDatabase) GetPlayerGameStats(playerId int32, gameId int3
 	}
 
 	pgStats := &pb.PlayerGameStats{
-		PlayerId: playerId,
-		TeamId:   teamId,
-		Stats:    stats,
+		Player: player,
+		TeamId: teamId,
+		Stats:  stats,
 	}
 
 	return pgStats, nil
