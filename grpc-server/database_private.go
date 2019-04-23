@@ -656,7 +656,7 @@ func (database *HeroBallDatabase) getTeams(teamIds []int32) ([]*pb.Team, error) 
 		FROM
 			Teams
 		WHERE
-			TeamId = IN($1)
+			TeamId = ANY($1)
 	`, pq.Array(teamIds))
 
 	if err == sql.ErrNoRows {
@@ -703,7 +703,7 @@ func (database *HeroBallDatabase) getLocations(locationIds []int32) ([]*pb.Locat
 		FROM
 			Locations
 		WHERE
-			LocationId = IN($1)
+			LocationId = ANY($1)
 	`, pq.Array(locationIds))
 
 	if err == sql.ErrNoRows {
