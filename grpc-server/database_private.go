@@ -545,3 +545,195 @@ func (database *HeroBallDatabase) getRecentCompetitionGames(competitionId int32,
 
 	return gameIds, nil
 }
+
+func (database *HeroBallDatabase) getCompetitionLocations(competitionId int32) ([]int32, error) {
+
+	if competitionId <= 0 {
+		return nil, fmt.Errorf("Invalid competitionId")
+	}
+
+	rows, err := database.db.Query(`
+		SELECT
+			DISTINCT LocationId
+		FROM 
+			Games
+		WHERE 
+			CompetitionId = $1
+	`, competitionId)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting competition locations: %v", err)
+	}
+
+	locationIds := make([]int32, 0)
+
+	for rows.Next() {
+
+		var locationId int32
+		err = rows.Scan(&locationId)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error getting location: %v", err)
+		}
+
+		locationIds = append(locationIds, locationId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error from rows: %v", err)
+	}
+
+	return locationIds, nil
+}
+
+func (database *HeroBallDatabase) getCompetitionTeams(competitionId int32) ([]int32, error) {
+
+	if competitionId <= 0 {
+		return nil, fmt.Errorf("Invalid competitionId")
+	}
+
+	rows, err := database.db.Query(`
+		SELECT 
+			DISTINCT HomeTeamId AS TeamId
+		FROM 
+			Games
+		WHERE 
+			CompetitionId = $1
+		UNION SELECT 
+			DISTINCT AwayTeamId
+		FROM 
+			Games
+		WHERE 
+			CompetitionId = $1
+	`, competitionId)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting competition teams: %v", err)
+	}
+
+	teamIds := make([]int32, 0)
+
+	for rows.Next() {
+
+		var teamId int32
+		err = rows.Scan(&teamId)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error getting location: %v", err)
+		}
+
+		teamIds = append(teamIds, teamId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error from rows: %v", err)
+	}
+
+	return teamIds, nil
+}
+
+func (database *HeroBallDatabase) getTeams(teamIds []int32) ([]*pb.Team, error) {
+
+	if teamIds == nil {
+		return nil, fmt.Errorf("Invalid teamIds")
+	}
+
+	rows, err := database.db.Query(`
+		SELECT
+			Name
+		FROM
+			Teams
+		WHERE
+			TeamId = IN($1)
+	`, teamIds)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("Teams do not exist")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting teams: %v", err)
+	}
+
+	teams := make([]*pb.Team, 0)
+
+	for rows.Next() {
+
+		team := pb.Team{}
+
+		err = rows.Scan(&team.Name)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error getting team info: %v", err)
+		}
+
+		teams = append(teams, &team)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting teams: %v", err)
+	}
+
+	return teams, nil
+}
+
+func (database *HeroBallDatabase) getLocations(locationIds []int32) ([]*pb.Location, error) {
+
+	if locationIds == nil {
+		return nil, fmt.Errorf("Invalid locationIds")
+	}
+
+	rows, err := database.db.Query(`
+		SELECT
+			Name
+		FROM
+			Locations
+		WHERE
+			LocationId = IN($1)
+	`, locationIds)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("Locations do not exist")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting Locations: %v", err)
+	}
+
+	locations := make([]*pb.Location, 0)
+
+	for rows.Next() {
+
+		location := pb.Location{}
+
+		err = rows.Scan(&location.Name)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error getting location info: %v", err)
+		}
+
+		locations = append(locations, &location)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting locations: %v", err)
+	}
+
+	return locations, nil
+}

@@ -83,6 +83,36 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.RecentGames = recentGames
 
+	/* now get locations */
+	locationIds, err := database.getCompetitionLocations(competitionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	locations, err := database.getLocations(locationIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	compInfo.Locations = locations
+
+	/* now get teams */
+	teamIds, err := database.getCompetitionTeams(competitionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teams, err := database.getTeams(teamIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	compInfo.Teams = teams
+
 	return compInfo, nil
 }
 
