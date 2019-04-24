@@ -105,7 +105,7 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) 
 		return nil, fmt.Errorf("Invalid playerId")
 	}
 
-	playerStats, err := database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.PlayerId = $1", []interface{}{playerId}, "PlayerGameStats.PlayerId", []interface{}{})
+	playerStats, err := database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.PlayerId = $1", []interface{}{playerId}, "PlayerGameStats.PlayerId", nil)
 
 	if err != nil {
 		return nil, err
@@ -318,7 +318,7 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 		FROM
 			Games
 		WHERE GameId = $1
-	`, gameId).Scan(&homeTeamId, &awayTeamId)
+		`, gameId).Scan(&homeTeamId, &awayTeamId)
 
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("This game has no result")
@@ -329,13 +329,13 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 		}
 
 		/* now get the points for each */
-		homeTeamPoints, err := database.getPointsForTeamInGame(homeTeamId, gameId)
+		homeTeamStats, err := database.getStatsForTeamInGame(homeTeamId, gameId)
 
 		if err != nil {
 			return nil, err
 		}
 
-		awayTeamPoints, err := database.getPointsForTeamInGame(awayTeamId, gameId)
+		awayTeamStats, err := database.getStatsForTeamInGame(awayTeamId, gameId)
 
 		if err != nil {
 			return nil, err
@@ -344,42 +344,16 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 		results = append(results, &pb.GameResult{
 			HomeTeamId:     homeTeamId,
 			AwayTeamId:     awayTeamId,
-			HomeTeamPoints: homeTeamPoints,
-			AwayTeamPoints: awayTeamPoints,
+			HomeTeamPoints: (homeTeamStats.TotalStats.ThreePointFGM * 3) + (homeTeamStats.TotalStats.TwoPointFGM * 2) + (homeTeamStats.TotalStats.FreeThrowsMade),
+			AwayTeamPoints: (awayTeamStats.TotalStats.ThreePointFGM * 3) + (awayTeamStats.TotalStats.TwoPointFGM * 2) + (awayTeamStats.TotalStats.FreeThrowsMade),
 		})
-
 	}
 
 	return results, nil
 }
 
-func (database *HeroBallDatabase) getPointsForTeamInGame(teamId int32, gameId int32) (int32, error) {
-
-	var points int32
-
-	err := database.db.QueryRow(`
-		SELECT
-			COALESCE(SUM(FreeThrowsMade),0) +
-			COALESCE(SUM(TwoPointFGM),0) * 2 +
-			COALESCE(SUM(ThreePointFGM),0) * 3
-		FROM 
-			Stats
-		LEFT JOIN PlayerGames ON 
-			Stats.StatsId = PlayerGames.StatsId
-		GROUP BY
-			PlayerGames.GameId, PlayerGames.TeamId
-		HAVING 
-			PlayerGames.GameId = $2 AND PlayerGames.TeamId = $1`, teamId, gameId).Scan(&points)
-
-	if err == sql.ErrNoRows {
-		return 0, fmt.Errorf("This game is invalid")
-	}
-
-	if err != nil {
-		return 0, fmt.Errorf("Error getting points for team in game: %v", err)
-	}
-
-	return points, nil
+func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int32) (*pb.AggregateStats, error) {
+	return database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.TeamId = $1 AND PlayerGameStats.GameId = $2", []interface{}{teamId, gameId}, "PlayerGameStats.GameId, PlayerGameStats.TeamId", nil)
 }
 
 func (database *HeroBallDatabase) getCompetition(competitionId int32) (*pb.Competition, error) {
