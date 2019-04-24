@@ -1133,27 +1133,29 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 		return nil, err
 	}
 
-	player, err := database.getPlayer(playerId)
+	if pointsLeader != nil {
+		player, err := database.getPlayer(playerId)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		pointsLeader.Player = player
+
+		teamId, err := database.getPlayersTeamInCompetition(playerId, competitionId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		team, err := database.getTeam(teamId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		pointsLeader.Team = team
 	}
-
-	pointsLeader.Player = player
-
-	teamId, err := database.getPlayersTeamInCompetition(playerId, competitionId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	team, err := database.getTeam(teamId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	pointsLeader.Team = team
 
 	return &pb.BasicStatsLeaders{
 		Points: []*pb.PlayerAggregateStats{pointsLeader},
