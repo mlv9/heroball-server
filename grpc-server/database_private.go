@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/lib/pq"
@@ -1114,7 +1115,73 @@ func (database *HeroBallDatabase) getResultsForCompetition(competitionId int32) 
 	return database.getResultsForGames(gameIds)
 }
 
-func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32, minimumGames int) (*pb.BasicStatsLeaders, error) {
+func (database *HeroBallDatabase) getCompetitionRoundCount(competitionId int32) (int32, error) {
+
+	var gameCount int32
+	var teamCount int32
+
+	if competitionId <= 0 {
+		return 0, fmt.Errorf("Invalid competitionId")
+	}
+
+	err := database.db.QueryRow(`
+		SELECT
+			COUNT(Games.GameId)
+		FROM
+			Games
+		WHERE
+			CompetitionId = $1	
+	`, competitionId).Scan(&gameCount)
+
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	/* get team count */
+	err = database.db.QueryRow(`
+		SELECT
+			COUNT(DISTINCT Games.HomeTeamId)
+		FROM
+			Games
+		WHERE
+			CompetitionId = $1
+		UNION
+		SELECT
+			COUNT(DISTINCT Games.AwayTeamId)
+		FROM
+			Games
+		WHERE
+			CompetitionId = $1
+	`, competitionId).Scan(&teamCount)
+
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	/* round count is games divided by teams, floored */
+	rounds := math.Floor(float64(gameCount) / float64(teamCount))
+
+	return int32(rounds), nil
+
+}
+
+func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32) (*pb.BasicStatsLeaders, error) {
+
+	roundsInComp, err := database.getCompetitionRoundCount(competitionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	requiredGameCount := int32(roundsInComp / 3)
 
 	statLeaders := &pb.BasicStatsLeaders{}
 
@@ -1124,7 +1191,7 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 		"GROUP BY PlayerGameStats.PlayerId",
 		"PlayerGameStats.PlayerId,",
 		"HAVING COUNT(PlayerGameStats.StatsId) >= $2",
-		[]interface{}{minimumGames},
+		[]interface{}{requiredGameCount},
 		`ORDER BY 
 			(COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
 			COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
