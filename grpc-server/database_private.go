@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
-	"strconv"
 
 	"github.com/lib/pq"
 
@@ -810,12 +809,6 @@ func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCo
 		return nil, fmt.Errorf("Invalid maxCount")
 	}
 
-	limit := "ALL"
-
-	if maxCount != 0 {
-		limit = strconv.Itoa(int(maxCount))
-	}
-
 	gameIds := make([]int32, 0)
 
 	rows, err := database.db.Query(`
@@ -828,7 +821,7 @@ func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCo
 		ORDER BY
 			GameTime DESC
 		LIMIT $2`,
-		competitionId, limit)
+		competitionId, maxCount)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("That competitionId does not exist")
