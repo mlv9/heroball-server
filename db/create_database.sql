@@ -42,7 +42,7 @@ CREATE TABLE Games (
     GameId SERIAL PRIMARY KEY,
     CompetitionId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
     LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
-    HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+    HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId) CHECK HomeTeamId != AwayTeamId,
     AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
     GameTime TIMESTAMP NOT NULL
 );
