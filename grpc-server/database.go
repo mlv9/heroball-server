@@ -228,12 +228,11 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 
 func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32, minimumGames int) (*pb.BasicStatsLeaders, error) {
 
-	// selectConditions string, selectArgs []interface{}, groupConditions string, ordering string
-
-	pointsLeader, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
+	pointsLeader, playerId, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
 		fmt.Sprintf("Games.CompetitionId = $1 "),
 		[]interface{}{competitionId},
 		"GROUP BY PlayerGameStats.PlayerId",
+		"PlayerGameStats.PlayerId",
 		"HAVING COUNT(PlayerGameStats.StatsId) >= $2",
 		[]interface{}{minimumGames},
 		`ORDER BY 
@@ -245,6 +244,10 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 	if err != nil {
 		return nil, err
 	}
+
+	player, err := database.getPlayer(playerId)
+
+	pointsLeader.Player = player
 
 	return &pb.BasicStatsLeaders{
 		Points: []*pb.PlayerAggregateStats{pointsLeader},
