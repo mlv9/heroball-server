@@ -640,65 +640,6 @@ func (database *HeroBallDatabase) getPlayersInGame(gameId int32) ([]int32, error
 	return playerIds, nil
 }
 
-/* takes a playerId, return an array of recent games, up to maxnumber */
-func (database *HeroBallDatabase) getRecentPlayerGames(playerId int32, maxCount int32) ([]int32, error) {
-
-	if playerId <= 0 {
-		return nil, fmt.Errorf("Invalid playerId")
-	}
-
-	if maxCount <= 0 {
-		return nil, fmt.Errorf("Invalid maxCount")
-	}
-
-	gameIds := make([]int32, 0)
-
-	rows, err := database.db.Query(`
-		SELECT
-			Games.GameId
-		FROM
-			Games
-		LEFT JOIN
-			PlayerGames ON PlayerGames.GameId = Games.GameId
-		WHERE
-			PlayerGames.PlayerId = $1
-		ORDER BY
-			Games.GameTime DESC
-		LIMIT $2
-			`,
-		playerId, maxCount)
-
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("That playerId does not exist")
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-
-		var gameId int32
-
-		/* now to scan them all */
-		err = rows.Scan(&gameId)
-
-		if err != nil {
-			return nil, err
-		}
-
-		gameIds = append(gameIds, gameId)
-	}
-
-	err = rows.Err()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return gameIds, nil
-}
-
 /* takes a competitionId, return an array of ordered games, from most recent to least recent.  maxCount 0 has no limit */
 func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCount int32) ([]int32, error) {
 
@@ -869,13 +810,13 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 
 	rows, err := database.db.Query(`
 		SELECT
-			PlayerGames.TeamId,
+			PlayerGamesStats.TeamId,
 			Teams.Name,
-			PlayerGames.JerseyNumber
+			PlayerGamesStats.JerseyNumber
 		FROM
-			PlayerGames
+			PlayerGamesStats
 		LEFT JOIN
-			Teams ON PlayerGames.TeamId = Teams.TeamId	
+			Teams ON PlayerGameStats.TeamId = Teams.TeamId	
 	`)
 
 	if err == sql.ErrNoRows {
