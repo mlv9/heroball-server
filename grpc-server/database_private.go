@@ -247,7 +247,7 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGrouping(select
 			PlayerGameStats
 		GROUP BY
 			%v
-		WHERE 
+		HAVING 
 			%v`,
 		groupConditions, selectConditions), selectArgs...).Scan(
 		&aggregateStats.Count,
