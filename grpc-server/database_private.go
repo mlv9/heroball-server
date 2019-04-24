@@ -670,69 +670,71 @@ func (database *HeroBallDatabase) getPlayersInGame(gameId int32) ([]int32, error
 	return playerIds, nil
 }
 
-// /* takes a competitionId, return an array of ordered games, from most recent to least recent.  maxCount 0 has no limit */
-// func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCount int32) ([]int32, error) {
+/* returns the team that has been played with the most */
+func (database *HeroBallDatabase) getPlayersTeamInCompetition(playerId int32, competitionId int32) (int32, error) {
 
-// 	if competitionId <= 0 {
-// 		return nil, fmt.Errorf("Invalid competitionId")
-// 	}
+	if playerId <= 0 {
+		return 0, fmt.Errorf("Invalid playerId")
+	}
 
-// 	if maxCount < 0 {
-// 		return nil, fmt.Errorf("Invalid maxCount")
-// 	}
+	if competitionId <= 0 {
+		return 0, fmt.Errorf("Invalid competitionId")
+	}
 
-// 	limitQuery := ""
-// 	queryArgs := []interface{}{competitionId}
+	rows, err := database.db.Query(`
+		SELECT
+			PlayerGameStats.TeamId,
+			COUNT(PlayerGameStats.TeamId)
+		FROM
+			PlayerGameStats
+		LEFT JOIN
+			Games ON PlayerGameStats.GameId = Games.GameId
+		WHERE
+			PlayerGameStats.PlayerId = $1 AND Games.CompetitionId = $2
+		GROUP BY
+			PlayerGameStats.TeamId
+		`, playerId, competitionId)
 
-// 	/* if zero, we apply no limit */
-// 	if maxCount != 0 {
-// 		limitQuery = "LIMIT $2"
-// 		queryArgs = append(queryArgs, maxCount)
-// 	}
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
 
-// 	gameIds := make([]int32, 0)
+	if err != nil {
+		return 0, fmt.Errorf("Error getting player teams in comp: %v", err)
+	}
 
-// 	rows, err := database.db.Query(fmt.Sprintf(`
-// 		SELECT
-// 			GameId
-// 		FROM
-// 			Games
-// 		WHERE
-// 			Games.CompetitionId = $1
-// 		ORDER BY
-// 			GameTime DESC
-// 		%v`, limitQuery), queryArgs...)
+	var team struct {
+		TeamId int32
+		Count  int32
+	}
 
-// 	if err == sql.ErrNoRows {
-// 		return nil, fmt.Errorf("That competitionId does not exist")
-// 	}
+	for rows.Next() {
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+		var id int32
+		var count int32
 
-// 	for rows.Next() {
+		err = rows.Scan(
+			&id,
+			&count)
 
-// 		var gameId int32
+		if err != nil {
+			return 0, fmt.Errorf("Error scanning team: %v", err)
+		}
 
-// 		/* now to scan them all */
-// 		err = rows.Scan(&gameId)
+		if count > team.Count {
+			team.Count = count
+			team.TeamId = id
+		}
+	}
 
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	err = rows.Err()
 
-// 		gameIds = append(gameIds, gameId)
-// 	}
+	if err != nil {
+		return 0, fmt.Errorf("Error on scan: %v", err)
+	}
 
-// 	err = rows.Err()
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return gameIds, nil
-// }
+	return team.TeamId, nil
+}
 
 func (database *HeroBallDatabase) getCompetitionLocations(competitionId int32) ([]int32, error) {
 

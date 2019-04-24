@@ -247,7 +247,25 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 
 	player, err := database.getPlayer(playerId)
 
+	if err != nil {
+		return nil, err
+	}
+
 	pointsLeader.Player = player
+
+	teamId, err := database.getPlayersTeamInCompetition(playerId, competitionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	team, err := database.getTeam(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	pointsLeader.Team = team
 
 	return &pb.BasicStatsLeaders{
 		Points: []*pb.PlayerAggregateStats{pointsLeader},
