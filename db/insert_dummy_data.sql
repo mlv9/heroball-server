@@ -19,7 +19,20 @@ INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES
     ('Andrew', 'small-forward', 'something4@email.com', 2012, 'Some Description For Andrew'),
     ('Matthew', 'guard', 'something@email.com', 1998, 'Some Description');
 
-INSERT INTO Stats (
+INSERT INTO Games (
+    CompetitionId, 
+    LocationId, 
+    HomeTeamId, 
+    AwayTeamId, 
+    GameTime
+) VALUES (1,1,1,2,'2019-3-20'::timestamp);
+
+INSERT INTO PlayerGameStats (
+    PlayerId,
+    CompetitionId,
+    GameId, 
+    TeamId, 
+    JerseyNumber,
     TwoPointFGM,
     TwoPointFGA,
     ThreePointFGM,
@@ -35,24 +48,9 @@ INSERT INTO Stats (
     RegularFoulsForced,
     RegularFoulsCommitted,
     TechnicalFoulsCommitted,
-    MinutesPlayed
-) VALUES 
-    (5,10,1,3,2,2,2,6,2,1,1,3,2,2,0,29),
-    (3,11,2,4,2,4,2,6,2,2,2,1,4,2,1,35),
-    (1,4,0,3,0,0,2,6,0,0,0,2,1,0,0,40),
-    (2,10,0,0,1,2,3,4,5,2,4,3,4,2,1,21);
-
-INSERT INTO Games (
-    CompetitionId, 
-    LocationId, 
-    HomeTeamId, 
-    AwayTeamId, 
-    GameTime
-) VALUES (1,1,1,2,'2019-3-20'::timestamp);
-
-INSERT INTO PlayerGames (PlayerId, GameId, TeamId, StatsId, JerseyNumber)
+    MinutesPlayed)
     VALUES 
-        (1, 1, 1, 1, 9),
-        (2, 1, 1, 2, 8),
-        (3, 1, 2, 3, 11),
-        (4, 1, 2, 4, 2);
+        (1, 1, 1, 1, 9, 5,10,1,3,2,2,2,6,2,1,1,3,2,2,0,29),
+        (2, 1, 1, 1, 8, 3,11,2,4,2,4,2,6,2,2,2,1,4,2,1,35),
+        (3, 1, 1, 2, 11, 1,4,0,3,0,0,2,6,0,0,0,2,1,0,0,40),
+        (4, 1, 1, 2, 2, 2,10,0,0,1,2,3,4,5,2,4,3,4,2,1,21);
