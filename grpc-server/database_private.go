@@ -76,7 +76,7 @@ func (database *HeroBallDatabase) getPlayer(playerId int32) (*pb.Player, error) 
 	return player, nil
 }
 
-func (database *HeroBallDatabase) getPlayersStatsForGame(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
+func (database *HeroBallDatabase) getPlayerStatsForGame(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -105,7 +105,7 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) 
 		return nil, fmt.Errorf("Invalid playerId")
 	}
 
-	playerStats, err := database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.PlayerId = $1", []interface{}{playerId}, "PlayerGameStats.PlayerId", nil)
+	playerStats, err := database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.PlayerId = $1", []interface{}{playerId}, "PlayerGameStats.PlayerId")
 
 	if err != nil {
 		return nil, err
@@ -217,7 +217,7 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 	return joinedStats, nil
 }
 
-func (database *HeroBallDatabase) getAggregateStatsByConditionAndGrouping(groupConditions string, groupArgs []interface{}, selectConditions string, selectArgs []interface{}) (*pb.AggregateStats, error) {
+func (database *HeroBallDatabase) getAggregateStatsByConditionAndGrouping(selectConditions string, selectArgs []interface{}, groupConditions string) (*pb.AggregateStats, error) {
 
 	/* append to totals */
 	aggregateStats := &pb.AggregateStats{
@@ -249,7 +249,7 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGrouping(groupC
 			%v
 		WHERE 
 			%v`,
-		groupConditions, selectConditions), append(groupArgs, selectArgs...)).Scan(
+		groupConditions, selectConditions), selectArgs...).Scan(
 		&aggregateStats.Count,
 		&aggregateStats.TotalStats.TwoPointFGA,
 		&aggregateStats.TotalStats.TwoPointFGM,
@@ -353,7 +353,7 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 }
 
 func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int32) (*pb.AggregateStats, error) {
-	return database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.TeamId = $1 AND PlayerGameStats.GameId = $2", []interface{}{teamId, gameId}, "PlayerGameStats.GameId, PlayerGameStats.TeamId", nil)
+	return database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.TeamId = $1 AND PlayerGameStats.GameId = $2", []interface{}{teamId, gameId}, "PlayerGameStats.GameId, PlayerGameStats.TeamId")
 }
 
 func (database *HeroBallDatabase) getCompetition(competitionId int32) (*pb.Competition, error) {

@@ -165,7 +165,7 @@ func (database *HeroBallDatabase) GetGameInfo(gameId int32) (*pb.GameInfo, error
 
 	for _, playerId := range playerIds {
 
-		playerStat, err := database.getPlayersStatsForGame(playerId, gameId)
+		playerStat, err := database.getPlayerStatsForGame(playerId, gameId)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error getting player stats: %v", err)
