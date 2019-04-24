@@ -818,11 +818,11 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 
 	rows, err := database.db.Query(`
 		SELECT
-			PlayerGamesStats.TeamId,
+			PlayerGameStats.TeamId,
 			Teams.Name,
-			PlayerGamesStats.JerseyNumber
+			PlayerGameStats.JerseyNumber
 		FROM
-			PlayerGamesStats
+			PlayerGameStats
 		LEFT JOIN
 			Teams ON PlayerGameStats.TeamId = Teams.TeamId	
 	`)
