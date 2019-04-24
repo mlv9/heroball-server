@@ -1123,16 +1123,12 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 		return nil, err
 	}
 
-	fmt.Printf("Games: %v\n", games)
-
 	/* get results for games */
 	results, err := database.getResultsForGames(games)
 
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("Results: %v\n", results)
 
 	/* now to create an ordered list of teams */
 	teamsMap := make(map[int32]*pb.CompetitionTeam)
@@ -1199,10 +1195,8 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 
 	/* sorted on wins for the moment */
 	sort.Slice(standings, func(i, j int) bool {
-		return standings[i].Won < standings[j].Won
+		return standings[i].Won > standings[j].Won
 	})
-
-	fmt.Printf("Standings: %v\n", standings)
 
 	return standings, nil
 }
