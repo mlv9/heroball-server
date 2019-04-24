@@ -234,7 +234,7 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 		fmt.Sprintf("Games.CompetitionId = $1 "),
 		[]interface{}{competitionId},
 		"GROUP BY PlayerGameStats.PlayerId",
-		"HAVING GameCount > $2",
+		"HAVING COUNT(PlayerGameStats.StatsId) => $2",
 		[]interface{}{minimumGames},
 		`ORDER BY 
 			(COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
