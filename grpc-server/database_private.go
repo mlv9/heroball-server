@@ -398,6 +398,7 @@ func (database *HeroBallDatabase) getCompetition(competitionId int32) (*pb.Compe
 
 	err := database.db.QueryRow(`
 		SELECT
+			Competitions.CompetitionId,
 			Leagues.LeagueId,
 			Leagues.Name,
 			Leagues.Division,
@@ -408,6 +409,7 @@ func (database *HeroBallDatabase) getCompetition(competitionId int32) (*pb.Compe
 			Leagues ON Competitions.LeagueId = Leagues.LeagueId
 		WHERE CompetitionId = $1
 	`, competitionId).Scan(
+		&comp.CompetitionId,
 		&comp.League.LeagueId,
 		&comp.League.Name,
 		&comp.League.Division,
@@ -896,6 +898,7 @@ func (database *HeroBallDatabase) getTeams(teamIds []int32) ([]*pb.Team, error) 
 
 	rows, err := database.db.Query(`
 		SELECT
+			TeamId,
 			Name
 		FROM
 			Teams
@@ -917,7 +920,7 @@ func (database *HeroBallDatabase) getTeams(teamIds []int32) ([]*pb.Team, error) 
 
 		team := pb.Team{}
 
-		err = rows.Scan(&team.Name)
+		err = rows.Scan(&team.TeamId, &team.Name)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error getting team info: %v", err)
@@ -943,6 +946,7 @@ func (database *HeroBallDatabase) getLocations(locationIds []int32) ([]*pb.Locat
 
 	rows, err := database.db.Query(`
 		SELECT
+			LocationId,
 			Name
 		FROM
 			Locations
@@ -964,7 +968,7 @@ func (database *HeroBallDatabase) getLocations(locationIds []int32) ([]*pb.Locat
 
 		location := pb.Location{}
 
-		err = rows.Scan(&location.Name)
+		err = rows.Scan(&location.LocationId, &location.Name)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error getting location info: %v", err)
