@@ -650,69 +650,69 @@ func (database *HeroBallDatabase) getPlayersInGame(gameId int32) ([]int32, error
 	return playerIds, nil
 }
 
-/* takes a competitionId, return an array of ordered games, from most recent to least recent.  maxCount 0 has no limit */
-func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCount int32) ([]int32, error) {
+// /* takes a competitionId, return an array of ordered games, from most recent to least recent.  maxCount 0 has no limit */
+// func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCount int32) ([]int32, error) {
 
-	if competitionId <= 0 {
-		return nil, fmt.Errorf("Invalid competitionId")
-	}
+// 	if competitionId <= 0 {
+// 		return nil, fmt.Errorf("Invalid competitionId")
+// 	}
 
-	if maxCount < 0 {
-		return nil, fmt.Errorf("Invalid maxCount")
-	}
+// 	if maxCount < 0 {
+// 		return nil, fmt.Errorf("Invalid maxCount")
+// 	}
 
-	limitQuery := ""
-	queryArgs := []interface{}{competitionId}
+// 	limitQuery := ""
+// 	queryArgs := []interface{}{competitionId}
 
-	/* if zero, we apply no limit */
-	if maxCount != 0 {
-		limitQuery = "LIMIT $2"
-		queryArgs = append(queryArgs, maxCount)
-	}
+// 	/* if zero, we apply no limit */
+// 	if maxCount != 0 {
+// 		limitQuery = "LIMIT $2"
+// 		queryArgs = append(queryArgs, maxCount)
+// 	}
 
-	gameIds := make([]int32, 0)
+// 	gameIds := make([]int32, 0)
 
-	rows, err := database.db.Query(fmt.Sprintf(`
-		SELECT
-			GameId
-		FROM
-			Games
-		WHERE
-			Games.CompetitionId = $1
-		ORDER BY
-			GameTime DESC
-		%v`, limitQuery), queryArgs...)
+// 	rows, err := database.db.Query(fmt.Sprintf(`
+// 		SELECT
+// 			GameId
+// 		FROM
+// 			Games
+// 		WHERE
+// 			Games.CompetitionId = $1
+// 		ORDER BY
+// 			GameTime DESC
+// 		%v`, limitQuery), queryArgs...)
 
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("That competitionId does not exist")
-	}
+// 	if err == sql.ErrNoRows {
+// 		return nil, fmt.Errorf("That competitionId does not exist")
+// 	}
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	for rows.Next() {
+// 	for rows.Next() {
 
-		var gameId int32
+// 		var gameId int32
 
-		/* now to scan them all */
-		err = rows.Scan(&gameId)
+// 		/* now to scan them all */
+// 		err = rows.Scan(&gameId)
 
-		if err != nil {
-			return nil, err
-		}
+// 		if err != nil {
+// 			return nil, err
+// 		}
 
-		gameIds = append(gameIds, gameId)
-	}
+// 		gameIds = append(gameIds, gameId)
+// 	}
 
-	err = rows.Err()
+// 	err = rows.Err()
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return gameIds, nil
-}
+// 	return gameIds, nil
+// }
 
 func (database *HeroBallDatabase) getCompetitionLocations(competitionId int32) ([]int32, error) {
 
@@ -968,15 +968,7 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 		return nil, fmt.Errorf("Invalid competitionId")
 	}
 
-	/* get all games */
-	games, err := database.getCompetitionGames(competitionId, 0)
-
-	if err != nil {
-		return nil, err
-	}
-
-	/* get results for games */
-	results, err := database.getResultsForGames(games)
+	results, err := database.getResultsForCompetition(competitionId)
 
 	if err != nil {
 		return nil, err
@@ -1051,4 +1043,47 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 	})
 
 	return standings, nil
+}
+
+func (database *HeroBallDatabase) getResultsForCompetition(competitionId int32) ([]*pb.GameResult, error) {
+
+	if competitionId <= 0 {
+		return nil, fmt.Errorf("Invalid competitionId")
+	}
+
+	/* get all the games in a competition */
+
+	rows, err := database.db.Query(`
+		SELECT DISTINCT
+			GameId
+		FROM
+			Games
+		WHERE
+			CompetitionId = $1		
+		`, competitionId)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting results for comp: %v", err)
+	}
+
+	gameIds := make([]int32, 0)
+
+	for rows.Next() {
+
+		var gameId int32
+
+		err = rows.Scan(&gameId)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning gameId: %v", err)
+		}
+
+		gameIds = append(gameIds, gameId)
+	}
+
+	return database.getResultsForGames(gameIds)
 }
