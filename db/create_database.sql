@@ -16,7 +16,7 @@ CREATE TABLE Leagues (
 CREATE TABLE Competitions (
     CompetitionId SERIAL PRIMARY KEY,
     LeagueId SERIAL NOT NULL REFERENCES Leagues(LeagueId),
-    Name text NOT NULL,
+    Name text NOT NULL
 );
 
 CREATE TABLE Teams (
