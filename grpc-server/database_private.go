@@ -461,7 +461,7 @@ func (database *HeroBallDatabase) getGame(gameId int32) (*pb.Game, error) {
 		return nil, err
 	}
 
-	if games == nil {
+	if games == nil || len(games) == 0 {
 		return nil, fmt.Errorf("Could not find game")
 	}
 
@@ -480,7 +480,7 @@ func (database *HeroBallDatabase) getLocation(locationId int32) (*pb.Location, e
 		return nil, err
 	}
 
-	if locations == nil {
+	if locations == nil || len(locations) == 0 {
 		return nil, fmt.Errorf("Could not find location")
 	}
 
@@ -499,7 +499,7 @@ func (database *HeroBallDatabase) getTeam(teamId int32) (*pb.Team, error) {
 		return nil, err
 	}
 
-	if teams == nil {
+	if teams == nil || len(teams) == 0 {
 		return nil, fmt.Errorf("Could not find team")
 	}
 
