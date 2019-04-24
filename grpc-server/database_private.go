@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"sort"
+	"strconv"
 
 	"github.com/lib/pq"
 
@@ -353,14 +355,37 @@ func (database *HeroBallDatabase) getStatsTotals(statsIds []int32) (*pb.Stats, e
 
 func (database *HeroBallDatabase) getResultForGame(gameId int32) (*pb.GameResult, error) {
 
-	if gameId <= 0 {
-		return nil, fmt.Errorf("Invalid gameId")
+	results, err := database.getResultsForGames([]int32{gameId})
+
+	if err != nil {
+		return nil, err
 	}
 
-	var homeTeamId int32
-	var awayTeamId int32
+	if results == nil || len(results) == 0 {
+		return nil, fmt.Errorf("Could not find result")
+	}
 
-	err := database.db.QueryRow(`
+	if len(results) != 1 {
+		return nil, fmt.Errorf("Expecting 1 result, got %v", len(results))
+	}
+
+	return results[0], nil
+}
+
+func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.GameResult, error) {
+
+	if gameIds == nil {
+		return nil, fmt.Errorf("Invalid gameIds")
+	}
+
+	results := make([]*pb.GameResult, 0)
+
+	for _, gameId := range gameIds {
+
+		var homeTeamId int32
+		var awayTeamId int32
+
+		err := database.db.QueryRow(`
 		SELECT
 			HomeTeamId,
 			AwayTeamId
@@ -369,31 +394,37 @@ func (database *HeroBallDatabase) getResultForGame(gameId int32) (*pb.GameResult
 		WHERE GameId = $1
 	`, gameId).Scan(&homeTeamId, &awayTeamId)
 
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("This game has no result")
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("This game has no result")
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("Error getting teams in game: %v", err)
+		}
+
+		/* now get the points for each */
+		homeTeamPoints, err := database.getPointsForTeamInGame(homeTeamId, gameId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		awayTeamPoints, err := database.getPointsForTeamInGame(awayTeamId, gameId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, &pb.GameResult{
+			HomeTeamId:     homeTeamId,
+			AwayTeamId:     awayTeamId,
+			HomeTeamPoints: homeTeamPoints,
+			AwayTeamPoints: awayTeamPoints,
+		})
+
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("Error getting teams in game: %v", err)
-	}
-
-	/* now get the points for each */
-	homeTeamPoints, err := database.getPointsForTeamInGame(homeTeamId, gameId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	awayTeamPoints, err := database.getPointsForTeamInGame(awayTeamId, gameId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.GameResult{
-		HomeTeamPoints: homeTeamPoints,
-		AwayTeamPoints: awayTeamPoints,
-	}, nil
+	return results, nil
 }
 
 func (database *HeroBallDatabase) getPointsForTeamInGame(teamId int32, gameId int32) (int32, error) {
@@ -768,15 +799,21 @@ func (database *HeroBallDatabase) getRecentPlayerGames(playerId int32, maxCount 
 	return gameIds, nil
 }
 
-/* takes a competitionId, return an array of recent games, up to maxnumber */
-func (database *HeroBallDatabase) getRecentCompetitionGames(competitionId int32, maxCount int32) ([]int32, error) {
+/* takes a competitionId, return an array of ordered games, from most recent to least recent.  maxCount 0 has no limit */
+func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCount int32) ([]int32, error) {
 
 	if competitionId <= 0 {
 		return nil, fmt.Errorf("Invalid competitionId")
 	}
 
-	if maxCount <= 0 {
+	if maxCount < 0 {
 		return nil, fmt.Errorf("Invalid maxCount")
+	}
+
+	limit := "ALL"
+
+	if maxCount != 0 {
+		limit = strconv.Itoa(int(maxCount))
 	}
 
 	gameIds := make([]int32, 0)
@@ -790,9 +827,8 @@ func (database *HeroBallDatabase) getRecentCompetitionGames(competitionId int32,
 			Games.CompetitionId = $1
 		ORDER BY
 			GameTime DESC
-		LIMIT $2
-			`,
-		competitionId, maxCount)
+		LIMIT $2`,
+		competitionId, limit)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("That competitionId does not exist")
@@ -1069,4 +1105,97 @@ func (database *HeroBallDatabase) getLocations(locationIds []int32) ([]*pb.Locat
 	}
 
 	return locations, nil
+}
+
+func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32) ([]*pb.CompetitionTeam, error) {
+
+	/* get games in compeittion */
+
+	if competitionId <= 0 {
+		return nil, fmt.Errorf("Invalid competitionId")
+	}
+
+	/* get all games */
+	games, err := database.getCompetitionGames(competitionId, 0)
+
+	if err != nil {
+		return nil, err
+	}
+
+	/* get results for games */
+	results, err := database.getResultsForGames(games)
+
+	if err != nil {
+		return nil, err
+	}
+
+	/* now to create an ordered list of teams */
+	teamsMap := make(map[int32]*pb.CompetitionTeam)
+
+	for _, result := range results {
+
+		_, exists := teamsMap[result.HomeTeamId]
+
+		if !exists {
+
+			/* get the team */
+			team, err := database.getTeam(result.HomeTeamId)
+
+			if err != nil {
+				return nil, err
+			}
+
+			teamsMap[result.HomeTeamId] = &pb.CompetitionTeam{
+				Team: team,
+			}
+		}
+
+		if result.HomeTeamPoints > result.AwayTeamPoints {
+			teamsMap[result.HomeTeamId].Won++
+		} else if result.HomeTeamPoints < result.AwayTeamPoints {
+			teamsMap[result.HomeTeamId].Lost++
+		} else {
+			teamsMap[result.HomeTeamId].Drawn++
+		}
+
+		/* and away team */
+		_, exists = teamsMap[result.AwayTeamId]
+
+		if !exists {
+
+			/* get the team */
+			team, err := database.getTeam(result.AwayTeamId)
+
+			if err != nil {
+				return nil, err
+			}
+
+			teamsMap[result.AwayTeamId] = &pb.CompetitionTeam{
+				Team: team,
+			}
+		}
+
+		if result.AwayTeamPoints > result.HomeTeamPoints {
+			teamsMap[result.AwayTeamId].Won++
+		} else if result.AwayTeamPoints < result.HomeTeamPoints {
+			teamsMap[result.AwayTeamId].Lost++
+		} else {
+			teamsMap[result.AwayTeamId].Drawn++
+		}
+	}
+
+	/* now turn the teams map into an ordered list */
+	standings := make([]*pb.CompetitionTeam, 0)
+
+	/* into a list */
+	for _, team := range teamsMap {
+		standings = append(standings, team)
+	}
+
+	/* sorted on wins for the moment */
+	sort.Slice(standings, func(i, j int) bool {
+		return standings[i].Won < standings[j].Won
+	})
+
+	return standings, nil
 }
