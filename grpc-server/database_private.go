@@ -44,27 +44,27 @@ func (database *HeroBallDatabase) getPlayerProfile(playerId int32) (*pb.PlayerPr
 	return profile, nil
 }
 
-func (database *HeroBallDatabase) getPlayerGame(playerId int32, gameId int32) (*pb.PlayerGame, error) {
+// func (database *HeroBallDatabase) getPlayerGame(playerId int32, gameId int32) (*pb.PlayerGame, error) {
 
-	/* get stats to begin with */
-	pgStats, err := database.getPlayerGameStats(playerId, gameId)
+// 	/* get stats to begin with */
+// 	pgStats, err := database.getPlayerGameStats(playerId, gameId)
 
-	if err != nil {
-		return nil, fmt.Errorf("Error getting player game stats: %v", err)
-	}
+// 	if err != nil {
+// 		return nil, fmt.Errorf("Error getting player game stats: %v", err)
+// 	}
 
-	/* get the game */
-	game, err := database.getGame(gameId)
+// 	/* get the game */
+// 	game, err := database.getGame(gameId)
 
-	if err != nil {
-		return nil, fmt.Errorf("Error getting game: %v", err)
-	}
+// 	if err != nil {
+// 		return nil, fmt.Errorf("Error getting game: %v", err)
+// 	}
 
-	return &pb.PlayerGame{
-		Game:  game,
-		Stats: pgStats,
-	}, nil
-}
+// 	return &pb.PlayerGame{
+// 		Game:  game,
+// 		Stats: pgStats,
+// 	}, nil
+// }
 
 func (database *HeroBallDatabase) getPlayer(playerId int32) (*pb.Player, error) {
 
@@ -544,7 +544,7 @@ func (database *HeroBallDatabase) getGames(gameIds []int32) ([]*pb.Game, error) 
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("Error in db: %v")
+		return nil, fmt.Errorf("Error in db: %v", err)
 	}
 
 	games := make([]*pb.Game, 0)

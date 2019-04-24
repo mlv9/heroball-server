@@ -99,28 +99,6 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.Competition = comp
 
-	/* now get recent gameIds */
-	recentGameIds, err := database.getRecentCompetitionGames(competitionId, recentGameCount)
-
-	if err != nil {
-		return nil, err
-	}
-
-	recentGames := make([]*pb.Game, 0)
-
-	for _, gameId := range recentGameIds {
-
-		game, err := database.getGame(gameId)
-
-		if err != nil {
-			return nil, err
-		}
-
-		recentGames = append(recentGames, game)
-	}
-
-	compInfo.RecentGames = recentGames
-
 	/* now get locations */
 	locationIds, err := database.getCompetitionLocations(competitionId)
 
@@ -200,9 +178,8 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 	}
 
 	info := &pb.PlayerInfo{
-		PlayerId:    playerId,
-		RecentGames: make([]*pb.PlayerGame, 0),
-		Teams:       make([]*pb.PlayerTeam, 0),
+		PlayerId: playerId,
+		Teams:    make([]*pb.PlayerTeam, 0),
 	}
 
 	profile, err := database.getPlayerProfile(playerId)
@@ -236,24 +213,7 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 		return nil, fmt.Errorf("Error getting all stats for player: %v", err)
 	}
 
-	info.Averages = totalStats
-
-	recentGameIds, err := database.getRecentPlayerGames(playerId, recentGameCount)
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting recent games for player: %v", err)
-	}
-
-	for _, gameId := range recentGameIds {
-		game, err := database.getPlayerGame(playerId, gameId)
-
-		if err != nil {
-			return nil, fmt.Errorf("Error getting player game stats: %v", err)
-		}
-
-		info.RecentGames = append(info.RecentGames, game)
-
-	}
+	info.StatTotals = totalStats
 
 	return info, nil
 }
