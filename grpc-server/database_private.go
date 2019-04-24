@@ -236,7 +236,7 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 
 	err := database.db.QueryRow(fmt.Sprintf(`
 		SELECT
-			COUNT(PlayerGameStats.StatsId),
+			COUNT(PlayerGameStats.StatsId) As GameCount,
 			SUM(PlayerGameStats.TwoPointFGA),
 			SUM(PlayerGameStats.TwoPointFGM),
 			SUM(PlayerGameStats.ThreePointFGA), 
@@ -255,6 +255,8 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 			SUM(PlayerGameStats.MinutesPlayed)
 		FROM
 			PlayerGameStats
+		LEFT JOIN
+			Games ON PlayerGameStats.GameId = Games.GameId
 		GROUP BY
 			%v
 		HAVING 
