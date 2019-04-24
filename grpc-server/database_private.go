@@ -239,7 +239,7 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 
 	err := database.db.QueryRow(fmt.Sprintf(`
 		SELECT
-			COUNT(PlayerGameStats.StatsId) As GameCount,
+			COUNT(PlayerGameStats.StatsId),
 			SUM(PlayerGameStats.TwoPointFGA),
 			SUM(PlayerGameStats.TwoPointFGM),
 			SUM(PlayerGameStats.ThreePointFGA), 
