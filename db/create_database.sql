@@ -60,7 +60,7 @@ CREATE TABLE Stats (
 
 CREATE TABLE Games (
     GameId SERIAL PRIMARY KEY,
-    SeasonId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
+    CompetitionId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
     LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
     HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
     AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
