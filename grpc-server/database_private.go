@@ -124,7 +124,7 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 			Leagues.LeagueId,
 			Leagues.Name,
 			Leagues.Division,
-			Competitions.CompetitionId,
+			Games.CompetitionId,
 			Competitions.Name,
 			Teams.TeamId,
 			Teams.Name,
@@ -156,7 +156,9 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 		LEFT JOIN
 			Teams ON PlayerGameStats.TeamId = Teams.TeamId
 		LEFT JOIN
-			Players ON  PlayerGameStats.PlayerId = Players.PlayerId
+			Players ON PlayerGameStats.PlayerId = Players.PlayerId
+		LEFT JOIN
+			Games ON PlayerGameStats.GameId = Games.GameId
 		WHERE 
 			%v`,
 		conditions), args...)
