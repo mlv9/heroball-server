@@ -7,10 +7,16 @@ CREATE TYPE playerposition AS ENUM(
     'power-forward', 
     'center');
 
+CREATE TABLE Leagues (
+    LeagueId SERIAL PRIMARY KEY,
+    Name text NOT NULL,
+    Division text not null
+);
+
 CREATE TABLE Competitions (
     CompetitionId SERIAL PRIMARY KEY,
+    LeagueId SERIAL NOT NULL REFERENCES Leagues(LeagueId),
     Name text NOT NULL,
-    SubCompetition text
 );
 
 CREATE TABLE Teams (
@@ -54,7 +60,7 @@ CREATE TABLE Stats (
 
 CREATE TABLE Games (
     GameId SERIAL PRIMARY KEY,
-    CompetitionId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
+    SeasonId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
     LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
     HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
     AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),

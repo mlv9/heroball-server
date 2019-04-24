@@ -1,6 +1,10 @@
-INSERT INTO Competitions (Name, SubCompetition) VALUES
+INSERT INTO League (Name, Division) VALUES
     ('Fredcom', 'B Division'),
     ('Fredcom', 'A Division');
+
+INSERT INTO Competitions (Name, LeagueId) VALUES
+    ('Winter 2019', 1),
+    ('Winter 2019', 2);
 
 INSERT INTO Teams (Name) VALUES
     ('Cannons'),

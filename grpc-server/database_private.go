@@ -431,16 +431,26 @@ func (database *HeroBallDatabase) getCompetition(competitionId int32) (*pb.Compe
 		return nil, fmt.Errorf("Invalid competitionId")
 	}
 
-	comp := &pb.Competition{}
+	comp := &pb.Competition{
+		League: &pb.League{},
+	}
 
 	err := database.db.QueryRow(`
 		SELECT
-			Name,
-			SubCompetition
+			Leagues.LeagueId,
+			Leagues.Name,
+			Leagues.Division,
+			Competitions.Name
 		FROM
 			Competitions
+		LEFT JOIN
+			Leagues ON Competitions.LeagueId = Leagues.LeagueId
 		WHERE CompetitionId = $1
-	`, competitionId).Scan(&comp.Name, &comp.SubCompetition)
+	`, competitionId).Scan(
+		&comp.League.LeagueId,
+		&comp.League.Name,
+		&comp.League.Division,
+		&comp.Name)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("CompetitionId does not exist")
