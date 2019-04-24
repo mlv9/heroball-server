@@ -1116,6 +1116,8 @@ func (database *HeroBallDatabase) getResultsForCompetition(competitionId int32) 
 
 func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32, minimumGames int) (*pb.BasicStatsLeaders, error) {
 
+	statLeaders := &pb.BasicStatsLeaders{}
+
 	pointsLeader, playerId, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
 		fmt.Sprintf("Games.CompetitionId = $1 "),
 		[]interface{}{competitionId},
@@ -1155,9 +1157,9 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 		}
 
 		pointsLeader.Team = team
+
+		statLeaders.Points = []*pb.PlayerAggregateStats{pointsLeader}
 	}
 
-	return &pb.BasicStatsLeaders{
-		Points: []*pb.PlayerAggregateStats{pointsLeader},
-	}, nil
+	return statLeaders, nil
 }
