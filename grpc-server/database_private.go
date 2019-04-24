@@ -554,7 +554,7 @@ func (database *HeroBallDatabase) getPlayersForTeam(teamId int32) ([]int32, erro
 		SELECT
 			PlayerId
 		FROM
-			PlayerGames
+			PlayerGameStats
 		WHERE
 			TeamId = $1
 			`,
@@ -603,7 +603,7 @@ func (database *HeroBallDatabase) getPlayersInGame(gameId int32) ([]int32, error
 		SELECT
 			PlayerId
 		FROM
-			PlayerGames
+			PlayerGameStats
 		WHERE
 			GameId = $1
 			`,
