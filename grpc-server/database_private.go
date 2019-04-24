@@ -1190,5 +1190,7 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 		return standings[i].Won < standings[j].Won
 	})
 
+	fmt.Printf("Standings: %v\n", standings)
+
 	return standings, nil
 }
