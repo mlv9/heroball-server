@@ -1,4 +1,4 @@
-INSERT INTO League (Name, Division) VALUES
+INSERT INTO Leagues (Name, Division) VALUES
     ('Fredcom', 'B Division'),
     ('Fredcom', 'A Division');
 
