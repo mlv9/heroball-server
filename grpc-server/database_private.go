@@ -1113,3 +1113,49 @@ func (database *HeroBallDatabase) getResultsForCompetition(competitionId int32) 
 
 	return database.getResultsForGames(gameIds)
 }
+
+func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32, minimumGames int) (*pb.BasicStatsLeaders, error) {
+
+	pointsLeader, playerId, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
+		fmt.Sprintf("Games.CompetitionId = $1 "),
+		[]interface{}{competitionId},
+		"GROUP BY PlayerGameStats.PlayerId",
+		"PlayerGameStats.PlayerId,",
+		"HAVING COUNT(PlayerGameStats.StatsId) >= $2",
+		[]interface{}{minimumGames},
+		`ORDER BY 
+			(COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
+			COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
+			COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0))
+		DESC`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	player, err := database.getPlayer(playerId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	pointsLeader.Player = player
+
+	teamId, err := database.getPlayersTeamInCompetition(playerId, competitionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	team, err := database.getTeam(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	pointsLeader.Team = team
+
+	return &pb.BasicStatsLeaders{
+		Points: []*pb.PlayerAggregateStats{pointsLeader},
+	}, nil
+}
