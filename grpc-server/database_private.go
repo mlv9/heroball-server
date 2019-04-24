@@ -809,9 +809,18 @@ func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCo
 		return nil, fmt.Errorf("Invalid maxCount")
 	}
 
+	limitQuery := ""
+	queryArgs := []interface{}{competitionId}
+
+	/* if zero, we apply no limit */
+	if maxCount != 0 {
+		limitQuery = "LIMIT $2"
+		queryArgs = append(queryArgs, maxCount)
+	}
+
 	gameIds := make([]int32, 0)
 
-	rows, err := database.db.Query(`
+	rows, err := database.db.Query(fmt.Sprintf(`
 		SELECT
 			GameId
 		FROM
@@ -820,8 +829,7 @@ func (database *HeroBallDatabase) getCompetitionGames(competitionId int32, maxCo
 			Games.CompetitionId = $1
 		ORDER BY
 			GameTime DESC
-		LIMIT $2`,
-		competitionId, maxCount)
+		%v`, limitQuery), queryArgs...)
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("That competitionId does not exist")
