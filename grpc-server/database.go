@@ -231,9 +231,11 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 	// selectConditions string, selectArgs []interface{}, groupConditions string, ordering string
 
 	pointsLeader, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
-		fmt.Sprintf("Games.CompetitionId = $1 AND SUM(PlayerGameStats.StatsId) > %v", minimumGames),
+		fmt.Sprintf("Games.CompetitionId = $1 "),
 		[]interface{}{competitionId},
-		"PlayerGameStats.PlayerId",
+		"GROUP BY PlayerGameStats.PlayerId",
+		"HAVING GameCount > $2",
+		[]interface{}{minimumGames},
 		`ORDER BY 
 			(COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
 			COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
