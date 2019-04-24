@@ -164,7 +164,8 @@ func (database *HeroBallDatabase) GetGameInfo(gameId int32) (*pb.GameInfo, error
 	players := make([]*pb.PlayerGameStats, 0)
 
 	for _, playerId := range playerIds {
-		playerStat, err := database.getPlayerGameStats(playerId, gameId)
+
+		playerStat, err := database.getPlayersStatsForGame(playerId, gameId)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error getting player stats: %v", err)
@@ -206,22 +207,13 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 
 	info.Teams = teams
 
-	/* get games played */
-	totalGameIds, err := database.getAllGamesByPlayer(playerId)
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting all games for player: %v", err)
-	}
-
-	info.TotalGamesPlayed = int32(len(totalGameIds))
-
-	totalStats, err := database.getPlayerTotalStatsForGames(playerId, totalGameIds)
+	totalStats, err := database.getPlayerTotalStatsForAllTime(playerId)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting all stats for player: %v", err)
 	}
 
-	info.StatTotals = totalStats
+	info.Stats = totalStats
 
 	return info, nil
 }

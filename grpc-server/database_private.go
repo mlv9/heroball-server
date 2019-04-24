@@ -45,28 +45,6 @@ func (database *HeroBallDatabase) getPlayerProfile(playerId int32) (*pb.PlayerPr
 	return profile, nil
 }
 
-// func (database *HeroBallDatabase) getPlayerGame(playerId int32, gameId int32) (*pb.PlayerGame, error) {
-
-// 	/* get stats to begin with */
-// 	pgStats, err := database.getPlayerGameStats(playerId, gameId)
-
-// 	if err != nil {
-// 		return nil, fmt.Errorf("Error getting player game stats: %v", err)
-// 	}
-
-// 	/* get the game */
-// 	game, err := database.getGame(gameId)
-
-// 	if err != nil {
-// 		return nil, fmt.Errorf("Error getting game: %v", err)
-// 	}
-
-// 	return &pb.PlayerGame{
-// 		Game:  game,
-// 		Stats: pgStats,
-// 	}, nil
-// }
-
 func (database *HeroBallDatabase) getPlayer(playerId int32) (*pb.Player, error) {
 
 	if playerId <= 0 {
@@ -98,7 +76,7 @@ func (database *HeroBallDatabase) getPlayer(playerId int32) (*pb.Player, error) 
 	return player, nil
 }
 
-func (database *HeroBallDatabase) getPlayerGameStats(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
+func (database *HeroBallDatabase) getPlayersStatsForGame(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -108,190 +86,75 @@ func (database *HeroBallDatabase) getPlayerGameStats(playerId int32, gameId int3
 		return nil, fmt.Errorf("Invalid gameId")
 	}
 
-	var statsId int32
-	pteam := &pb.PlayerTeam{
-		Team: &pb.Team{},
+	stats, err := database.getPlayerGameStatsByCondition("PlayerGameStats.PlayerId = $1 AND PlayerGameStats.GameId = $2", []interface{}{playerId, gameId})
+
+	if err != nil {
+		return nil, err
 	}
 
-	err := database.db.QueryRow(`
+	if len(stats) != 1 {
+		return nil, fmt.Errorf("Error getting player stats for game - unexpected number of returns (%v)", len(stats))
+	}
+
+	return stats[0], nil
+}
+
+func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) (*pb.AggregateStats, error) {
+
+	if playerId <= 0 {
+		return nil, fmt.Errorf("Invalid playerId")
+	}
+
+	playerStats, err := database.getAggregateStatsByConditionAndGrouping("PlayerGameStats.PlayerId = $1", []interface{}{playerId}, "PlayerGameStats.PlayerId", []interface{}{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return playerStats, nil
+}
+
+func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions string, args []interface{}) ([]*pb.PlayerGameStats, error) {
+
+	joinedStats := make([]*pb.PlayerGameStats, 0)
+
+	rows, err := database.db.Query(fmt.Sprintf(`
 		SELECT
-			PlayerGames.TeamId,
+			PlayerGameStats.StatsId,
+			Leagues.LeagueId,
+			Leagues.Name,
+			Leagues.Division,
+			Competitions.CompetitionId,
+			Competitions.Name,
+			Teams.TeamId,
 			Teams.Name,
-			PlayerGames.JerseyNumber,
-			PlayerGames.StatsId
+			Players.PlayerId,
+			Players.Name,
+			Players.Position,
+			PlayerGameStats.TwoPointFGA,
+			PlayerGameStats.TwoPointFGM,
+			PlayerGameStats.ThreePointFGA, 
+			PlayerGameStats.ThreePointFGM,
+			PlayerGameStats.FreeThrowsAttempted,
+			PlayerGameStats.FreeThrowsMade,
+			PlayerGameStats.OffensiveRebounds,
+			PlayerGameStats.DefensiveRebounds,
+			PlayerGameStats.Assists,
+			PlayerGameStats.Blocks,
+			PlayerGameStats.Steals,
+			PlayerGameStats.Turnovers,
+			PlayerGameStats.RegularFoulsForced,
+			PlayerGameStats.RegularFoulsCommitted,
+			PlayerGameStats.TechnicalFoulsCommitted,
+			PlayerGameStats.MinutesPlayed
 		FROM
-			PlayerGames
-		LEFT JOIN
-			Teams ON Teams.TeamId = PlayerGames.TeamId
-		WHERE PlayerId = $1 AND GameId = $2`, playerId, gameId).Scan(
-		&pteam.Team.TeamId,
-		&pteam.Team.Name,
-		&pteam.JerseyNumber,
-		&statsId)
-
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("That player did not play in the game")
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("Error in db: %v", err)
-	}
-
-	/* get player */
-	player, err := database.getPlayer(playerId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	/* get stats */
-	stats, err := database.getStatsTotals([]int32{statsId})
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting player stats: %v", err)
-	}
-
-	pgStats := &pb.PlayerGameStats{
-		Player: player,
-		Team:   pteam,
-		Stats:  stats,
-	}
-
-	return pgStats, nil
-}
-
-func (database *HeroBallDatabase) getPlayerTotalStatsForGames(playerId int32, gameIds []int32) (*pb.Stats, error) {
-
-	if playerId <= 0 {
-		return nil, fmt.Errorf("Invalid playerId")
-	}
-
-	rows, err := database.db.Query(`
-		SELECT 
-			StatsId
-		FROM
-			PlayerGames
-		WHERE
-			PlayerId = $1
-		`, playerId)
+			PlayerGameStats
+		WHERE 
+			%v`,
+		conditions), args...)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting stats for player: %v", err)
-	}
-
-	statsIds := make([]int32, 0)
-
-	for rows.Next() {
-
-		var statsId int32
-
-		err = rows.Scan(&statsId)
-
-		if err != nil {
-			return nil, fmt.Errorf("Error scanning statsId: %v", err)
-		}
-
-		/* now get the game stats */
-		statsIds = append(statsIds, statsId)
-	}
-
-	err = rows.Err()
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting stats: %v", err)
-	}
-
-	/* now get values */
-	totalStats, err := database.getStatsTotals(statsIds)
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting stats: %v", err)
-	}
-
-	return totalStats, nil
-}
-
-func (database *HeroBallDatabase) getAllGamesByPlayer(playerId int32) ([]int32, error) {
-
-	if playerId <= 0 {
-		return nil, fmt.Errorf("Invalid playerId")
-	}
-
-	rows, err := database.db.Query(`
-		SELECT 
-			GameId
-		FROM
-			PlayerGames
-		WHERE
-			PlayerId = $1
-		`, playerId)
-
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting games by player: %v", err)
-	}
-
-	gameIds := make([]int32, 0)
-
-	for rows.Next() {
-
-		var gameId int32
-
-		err = rows.Scan(&gameId)
-
-		if err != nil {
-			return nil, fmt.Errorf("Error scanning gameId: %v", err)
-		}
-
-		/* now get the game stats */
-		gameIds = append(gameIds, gameId)
-	}
-
-	err = rows.Err()
-
-	if err != nil {
-		return nil, fmt.Errorf("Error getting games: %v", err)
-	}
-
-	return gameIds, nil
-}
-
-func (database *HeroBallDatabase) getStatsTotals(statsIds []int32) (*pb.Stats, error) {
-
-	totalStats := &pb.Stats{}
-
-	rows, err := database.db.Query(`
-		SELECT
-			Stats.TwoPointFGA,
-			Stats.TwoPointFGM,
-			Stats.ThreePointFGA, 
-			Stats.ThreePointFGM,
-			Stats.FreeThrowsAttempted,
-			Stats.FreeThrowsMade,
-			Stats.OffensiveRebounds,
-			Stats.DefensiveRebounds,
-			Stats.Assists,
-			Stats.Blocks,
-			Stats.Steals,
-			Stats.Turnovers,
-			Stats.RegularFoulsForced,
-			Stats.RegularFoulsCommitted,
-			Stats.TechnicalFoulsCommitted,
-			Stats.MinutesPlayed
-		FROM
-			Stats
-		WHERE StatsId = ANY($1)`,
-		pq.Array(statsIds))
-
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("The statsId does not exist")
 	}
 
 	if err != nil {
@@ -300,47 +163,49 @@ func (database *HeroBallDatabase) getStatsTotals(statsIds []int32) (*pb.Stats, e
 
 	for rows.Next() {
 
-		stats := &pb.Stats{}
+		stats := &pb.PlayerGameStats{
+			Competition: &pb.Competition{
+				League: &pb.League{},
+			},
+			Team:   &pb.Team{},
+			Player: &pb.Player{},
+			Stats:  &pb.Stats{},
+		}
 
 		err = rows.Scan(
-			&stats.TwoPointFGA,
-			&stats.TwoPointFGM,
-			&stats.ThreePointFGA,
-			&stats.ThreePointFGM,
-			&stats.FreeThrowsAttempted,
-			&stats.FreeThrowsMade,
-			&stats.OffensiveRebounds,
-			&stats.DefensiveRebounds,
-			&stats.Assists,
-			&stats.Blocks,
-			&stats.Steals,
-			&stats.Turnovers,
-			&stats.RegularFoulsForced,
-			&stats.RegularFoulsCommitted,
-			&stats.TechnicalFoulsCommitted,
-			&stats.MinutesPlayed)
+			&stats.StatsId,
+			&stats.Competition.League.LeagueId,
+			&stats.Competition.League.Name,
+			&stats.Competition.League.Division,
+			&stats.Competition.CompetitionId,
+			&stats.Competition.Name,
+			&stats.Team.TeamId,
+			&stats.Team.Name,
+			&stats.Player.PlayerId,
+			&stats.Player.Name,
+			&stats.Player.Position,
+			&stats.Stats.TwoPointFGA,
+			&stats.Stats.TwoPointFGM,
+			&stats.Stats.ThreePointFGA,
+			&stats.Stats.ThreePointFGM,
+			&stats.Stats.FreeThrowsAttempted,
+			&stats.Stats.FreeThrowsMade,
+			&stats.Stats.OffensiveRebounds,
+			&stats.Stats.DefensiveRebounds,
+			&stats.Stats.Assists,
+			&stats.Stats.Blocks,
+			&stats.Stats.Steals,
+			&stats.Stats.Turnovers,
+			&stats.Stats.RegularFoulsForced,
+			&stats.Stats.RegularFoulsCommitted,
+			&stats.Stats.TechnicalFoulsCommitted,
+			&stats.Stats.MinutesPlayed)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error scanning stats: %v", err)
 		}
 
-		/* append to totals */
-		totalStats.TwoPointFGA += stats.TwoPointFGA
-		totalStats.TwoPointFGM += stats.TwoPointFGM
-		totalStats.ThreePointFGA += stats.ThreePointFGA
-		totalStats.ThreePointFGM += stats.ThreePointFGM
-		totalStats.FreeThrowsAttempted += stats.FreeThrowsAttempted
-		totalStats.FreeThrowsMade += stats.FreeThrowsMade
-		totalStats.OffensiveRebounds += stats.OffensiveRebounds
-		totalStats.DefensiveRebounds += stats.DefensiveRebounds
-		totalStats.Assists += stats.Assists
-		totalStats.Blocks += stats.Blocks
-		totalStats.Steals += stats.Steals
-		totalStats.Turnovers += stats.Turnovers
-		totalStats.RegularFoulsForced += stats.RegularFoulsForced
-		totalStats.RegularFoulsCommitted += stats.RegularFoulsCommitted
-		totalStats.TechnicalFoulsCommitted += stats.TechnicalFoulsCommitted
-		totalStats.MinutesPlayed += stats.MinutesPlayed
+		joinedStats = append(joinedStats, stats)
 	}
 
 	err = rows.Err()
@@ -349,7 +214,69 @@ func (database *HeroBallDatabase) getStatsTotals(statsIds []int32) (*pb.Stats, e
 		return nil, fmt.Errorf("Error getting total stats: %v", err)
 	}
 
-	return totalStats, nil
+	return joinedStats, nil
+}
+
+func (database *HeroBallDatabase) getAggregateStatsByConditionAndGrouping(groupConditions string, groupArgs []interface{}, selectConditions string, selectArgs []interface{}) (*pb.AggregateStats, error) {
+
+	/* append to totals */
+	aggregateStats := &pb.AggregateStats{
+		TotalStats: &pb.Stats{},
+	}
+
+	err := database.db.QueryRow(fmt.Sprintf(`
+		SELECT
+			COUNT(PlayerGameStats.StatsId),
+			SUM(PlayerGameStats.TwoPointFGA),
+			SUM(PlayerGameStats.TwoPointFGM),
+			SUM(PlayerGameStats.ThreePointFGA), 
+			SUM(PlayerGameStats.ThreePointFGM),
+			SUM(PlayerGameStats.FreeThrowsAttempted),
+			SUM(PlayerGameStats.FreeThrowsMade),
+			SUM(PlayerGameStats.OffensiveRebounds),
+			SUM(PlayerGameStats.DefensiveRebounds),
+			SUM(PlayerGameStats.Assists),
+			SUM(PlayerGameStats.Blocks),
+			SUM(PlayerGameStats.Steals),
+			SUM(PlayerGameStats.Turnovers),
+			SUM(PlayerGameStats.RegularFoulsForced),
+			SUM(PlayerGameStats.RegularFoulsCommitted),
+			SUM(PlayerGameStats.TechnicalFoulsCommitted),
+			SUM(PlayerGameStats.MinutesPlayed)
+		FROM
+			PlayerGameStats
+		GROUP BY
+			%v
+		WHERE 
+			%v`,
+		groupConditions, selectConditions), append(groupArgs, selectArgs...)).Scan(
+		&aggregateStats.Count,
+		&aggregateStats.TotalStats.TwoPointFGA,
+		&aggregateStats.TotalStats.TwoPointFGM,
+		&aggregateStats.TotalStats.ThreePointFGA,
+		&aggregateStats.TotalStats.ThreePointFGM,
+		&aggregateStats.TotalStats.FreeThrowsAttempted,
+		&aggregateStats.TotalStats.FreeThrowsMade,
+		&aggregateStats.TotalStats.OffensiveRebounds,
+		&aggregateStats.TotalStats.DefensiveRebounds,
+		&aggregateStats.TotalStats.Assists,
+		&aggregateStats.TotalStats.Blocks,
+		&aggregateStats.TotalStats.Steals,
+		&aggregateStats.TotalStats.Turnovers,
+		&aggregateStats.TotalStats.RegularFoulsForced,
+		&aggregateStats.TotalStats.RegularFoulsCommitted,
+		&aggregateStats.TotalStats.TechnicalFoulsCommitted,
+		&aggregateStats.TotalStats.MinutesPlayed)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return aggregateStats, nil
 }
 
 func (database *HeroBallDatabase) getResultForGame(gameId int32) (*pb.GameResult, error) {

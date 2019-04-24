@@ -38,8 +38,23 @@ CREATE TABLE Players (
     Description text
 );
 
-CREATE TABLE Stats (
+CREATE TABLE Games (
+    GameId SERIAL PRIMARY KEY,
+    CompetitionId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
+    LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
+    HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+    AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+    GameTime TIMESTAMP NOT NULL
+);
+
+CREATE TABLE PlayerGameStats (
     StatsId SERIAL PRIMARY KEY,
+    LeagueId SERIAL NOT NULL REFERENCES Leagues(LeagueId),
+    CompetitionId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
+    TeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
+    GameId SERIAL NOT NULL REFERENCES Games(GameId),
+    PlayerId SERIAL NOT NULL REFERENCES Players(PlayerId),
+    JerseyNumber int NOT NULL,
     TwoPointFGA int DEFAULT 0,
     TwoPointFGM int DEFAULT 0 CHECK (TwoPointFGA >= TwoPointFGM),
     ThreePointFGA int DEFAULT 0,
@@ -56,21 +71,4 @@ CREATE TABLE Stats (
     RegularFoulsCommitted int DEFAULT 0 CHECK (5 >= RegularFoulsCommitted),
     TechnicalFoulsCommitted int DEFAULT 0 CHECK (2 >= TechnicalFoulsCommitted),
     MinutesPlayed int DEFAULT 0
-);
-
-CREATE TABLE Games (
-    GameId SERIAL PRIMARY KEY,
-    CompetitionId SERIAL NOT NULL REFERENCES Competitions(CompetitionId),
-    LocationId SERIAL NOT NULL REFERENCES Locations(LocationId),
-    HomeTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
-    AwayTeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
-    GameTime TIMESTAMP NOT NULL
-);
-
-CREATE TABLE PlayerGames (
-  PlayerId SERIAL NOT NULL REFERENCES Players(PlayerId),
-  GameId SERIAL NOT NULL REFERENCES Games(GameId),
-  TeamId SERIAL NOT NULL REFERENCES Teams(TeamId),
-  StatsId SERIAL NOT NULL REFERENCES Stats(StatsId),
-  JerseyNumber int NOT NULL
 );
