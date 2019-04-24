@@ -129,6 +129,14 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.Teams = teams
 
+	standings, err := database.getStandingsForCompetition(competitionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	compInfo.Standings = standings
+
 	return compInfo, nil
 }
 
