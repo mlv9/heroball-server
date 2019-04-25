@@ -593,7 +593,7 @@ func (database *HeroBallDatabase) getPlayersForTeam(teamId int32) ([]int32, erro
 
 	rows, err := database.db.Query(`
 		SELECT
-			PlayerId
+			DISTINCT PlayerId
 		FROM
 			PlayerGameStats
 		WHERE
@@ -642,7 +642,7 @@ func (database *HeroBallDatabase) getPlayersInGame(gameId int32) ([]int32, error
 
 	rows, err := database.db.Query(`
 		SELECT
-			PlayerId
+			DISTINCT PlayerId
 		FROM
 			PlayerGameStats
 		WHERE
@@ -694,7 +694,7 @@ func (database *HeroBallDatabase) getPlayersTeamInCompetition(playerId int32, co
 
 	rows, err := database.db.Query(`
 		SELECT
-			PlayerGameStats.TeamId,
+			DISTINCT PlayerGameStats.TeamId,
 			COUNT(PlayerGameStats.TeamId)
 		FROM
 			PlayerGameStats
