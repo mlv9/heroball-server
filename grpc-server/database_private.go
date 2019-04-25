@@ -1257,7 +1257,7 @@ func (database *HeroBallDatabase) getStatsLeadersForTeam(teamId int32) (*pb.Basi
 
 	requiredGameCount := int32(math.Ceil(float64(teamGameCount) / 3))
 
-	return database.getStatsLeaders(competitionId, requiredGameCount, "Games.TeamId = $1", []interface{}{teamId})
+	return database.getStatsLeaders(competitionId, requiredGameCount, "PlayerGameStats.TeamId = $1", []interface{}{teamId})
 }
 
 func (database *HeroBallDatabase) getStatsLeadersForCompetition(competitionId int32) (*pb.BasicStatsLeaders, error) {
