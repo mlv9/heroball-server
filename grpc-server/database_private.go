@@ -860,7 +860,8 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 			PlayerGameStats
 		LEFT JOIN
 			Teams ON PlayerGameStats.TeamId = Teams.TeamId
-	`)
+		WHERE PlayerGameStats.PlayerId = $1
+	`, playerId)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
