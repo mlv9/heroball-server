@@ -79,6 +79,29 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo.Players = players
 
+	/* get the comp */
+	compId, err := database.getCompetitionForTeam(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	competition, err := database.getCompetition(compId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamInfo.Competition = competition
+
+	statLeaders, err := database.getStatsLeadersForTeam(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamInfo.StatsLeaders = statLeaders
+
 	return teamInfo, nil
 }
 
@@ -137,7 +160,7 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.Standings = standings
 
-	statLeaders, err := database.getCompetitionStatsLeaders(competitionId)
+	statLeaders, err := database.getStatsLeadersForCompetition(competitionId)
 
 	if err != nil {
 		return nil, err

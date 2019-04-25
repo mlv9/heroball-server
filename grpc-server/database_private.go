@@ -3,8 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"sort"
 	"math"
+	"sort"
+
 	"github.com/lib/pq"
 
 	pb "github.com/heroballapp/server/protobuf"
@@ -246,7 +247,7 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 
 	err := database.db.QueryRow(fmt.Sprintf(`
 		SELECT
-			%v
+			%v,
 			COUNT(PlayerGameStats.StatsId),
 			SUM(PlayerGameStats.TwoPointFGA),
 			SUM(PlayerGameStats.TwoPointFGM),
@@ -1180,7 +1181,86 @@ func (database *HeroBallDatabase) getCompetitionRoundCount(competitionId int32) 
 
 }
 
-func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32) (*pb.BasicStatsLeaders, error) {
+func (database *HeroBallDatabase) getTeamGameCount(teamId int32) (int32, error) {
+
+	var teamGameCount int32
+
+	if teamId <= 0 {
+		return 0, fmt.Errorf("Invalid teamId")
+	}
+
+	err := database.db.QueryRow(`
+		SELECT
+			COUNT(DISTINCT PlayerGameStats.GameId)
+		FROM
+			PlayerGameStats
+		WHERE
+			TeamId = $1
+	`, teamId).Scan(&teamGameCount)
+
+	if err == sql.ErrNoRows {
+		return 0, nil
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	return teamGameCount, nil
+
+}
+
+func (database *HeroBallDatabase) getCompetitionForTeam(teamId int32) (int32, error) {
+
+	if teamId <= 0 {
+		return 0, fmt.Errorf("Invalid teamId")
+	}
+
+	var competitionId int32
+
+	err := database.db.QueryRow(`
+		SELECT
+			CompetitionId
+		FROM
+			PlayerGameStats
+		LEFT JOIN
+			Games ON Games.GameId = PlayerGameStats.GameId
+		ORDER BY
+			Games.GameTime ASC
+		LIMIT 1
+		`).Scan(&competitionId)
+
+	if err == sql.ErrNoRows {
+		return 0, fmt.Errorf("Team does not exist")
+	}
+
+	if err != nil {
+		return 0, fmt.Errorf("Error getting comp for team: %v", err)
+	}
+
+	return competitionId, nil
+}
+
+func (database *HeroBallDatabase) getStatsLeadersForTeam(teamId int32) (*pb.BasicStatsLeaders, error) {
+
+	competitionId, err := database.getCompetitionForTeam(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamGameCount, err := database.getTeamGameCount(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	requiredGameCount := int32(math.Ceil(float64(teamGameCount) / 3))
+
+	return database.getStatsLeaders(competitionId, requiredGameCount, "Games.TeamId = $1", []interface{}{teamId})
+}
+
+func (database *HeroBallDatabase) getStatsLeadersForCompetition(competitionId int32) (*pb.BasicStatsLeaders, error) {
 
 	roundsInComp, err := database.getCompetitionRoundCount(competitionId)
 
@@ -1188,15 +1268,20 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 		return nil, err
 	}
 
-	requiredGameCount := int32(math.Ceil( float64(roundsInComp) / 3))
+	requiredGameCount := int32(math.Ceil(float64(roundsInComp) / 3))
+
+	return database.getStatsLeaders(competitionId, requiredGameCount, "Games.CompetitionId = $1", []interface{}{competitionId})
+}
+
+func (database *HeroBallDatabase) getStatsLeaders(competitionId int32, requiredGameCount int32, whereClause string, whereArgs []interface{}) (*pb.BasicStatsLeaders, error) {
 
 	statLeaders := &pb.BasicStatsLeaders{}
 
 	pointsLeader, playerId, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
-		fmt.Sprintf("Games.CompetitionId = $1 "),
-		[]interface{}{competitionId},
+		whereClause,
+		whereArgs,
 		"GROUP BY PlayerGameStats.PlayerId",
-		"PlayerGameStats.PlayerId,",
+		"PlayerGameStats.PlayerId",
 		"HAVING COUNT(PlayerGameStats.StatsId) >= $2",
 		[]interface{}{requiredGameCount},
 		`ORDER BY 
