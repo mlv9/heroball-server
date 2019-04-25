@@ -3,9 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"math"
 	"sort"
-
+	"math"
 	"github.com/lib/pq"
 
 	pb "github.com/heroballapp/server/protobuf"
@@ -1189,11 +1188,7 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 		return nil, err
 	}
 
-	fmt.Printf("Rounds in comp: %v", roundsInComp)
-
-	requiredGameCount := int32(roundsInComp / 3)
-
-	fmt.Printf("Required games: %v", requiredGameCount)
+	requiredGameCount := int32(math.Ceil( float64(roundsInComp) / 3))
 
 	statLeaders := &pb.BasicStatsLeaders{}
 
