@@ -361,14 +361,18 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 			return nil, err
 		}
 
+		if homeTeamStats == nil {
+			return nil, fmt.Errorf("Was not able to find teamId %v stats for gameId %v", homeTeamId, gameId)
+		}
+
 		awayTeamStats, err := database.getStatsForTeamInGame(awayTeamId, gameId)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if homeTeamStats == nil || awayTeamStats == nil {
-			return nil, fmt.Errorf("Was not able to find stats for gameId %v", gameId)
+		if awayTeamStats == nil {
+			return nil, fmt.Errorf("Was not able to find teamId %v stats for gameId %v", awayTeamId, gameId)
 		}
 
 		results = append(results, &pb.GameResult{
