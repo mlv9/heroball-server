@@ -854,7 +854,7 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 	rows, err := database.db.Query(`
 		SELECT
 			DISTINCT PlayerGameStats.TeamId,
-			Teams.Name,
+			Teams.Name
 		FROM
 			PlayerGameStats
 		LEFT JOIN
