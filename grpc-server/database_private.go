@@ -853,19 +853,14 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 
 	rows, err := database.db.Query(`
 		SELECT
-			PlayerGameStats.TeamId,
+			DISTINCT PlayerGameStats.TeamId,
 			Teams.Name,
-			PlayerGameStats.JerseyNumber
 		FROM
 			PlayerGameStats
 		LEFT JOIN
 			Teams ON Teams.TeamId = PlayerGameStats.TeamId
-		LEFT JOIN
-			Games ON PlayerGameStats.GameId = Games.GameId
 		WHERE 
 			PlayerGameStats.PlayerId = $1
-		ORDER BY
-			Games.GameTime DESC
 		`, playerId)
 
 	if err == sql.ErrNoRows {
@@ -876,11 +871,9 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 		return nil, fmt.Errorf("Error getting teams for player: %v", err)
 	}
 
-	teamsMap := make(map[int32]*pb.PlayerTeam)
+	teams := make([]*pb.PlayerTeam, 0)
 
 	for rows.Next() {
-
-		var jerseyNumber int32
 
 		playerTeam := &pb.PlayerTeam{
 			Team: &pb.Team{},
@@ -888,21 +881,13 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 
 		err = rows.Scan(
 			&playerTeam.Team.TeamId,
-			&playerTeam.Team.Name,
-			&jerseyNumber)
+			&playerTeam.Team.Name)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error scanning team: %v", err)
 		}
 
-		_, exists := teamsMap[playerTeam.Team.TeamId]
-
-		if !exists {
-			playerTeam.JerseyNumbers = []int32{jerseyNumber}
-			teamsMap[playerTeam.Team.TeamId] = playerTeam
-		} else {
-			teamsMap[playerTeam.Team.TeamId].JerseyNumbers = append(teamsMap[playerTeam.Team.TeamId].JerseyNumbers, jerseyNumber)
-		}
+		teams = append(teams, playerTeam)
 	}
 
 	err = rows.Err()
@@ -911,11 +896,44 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 		return nil, fmt.Errorf("Error from scan: %v", err)
 	}
 
-	/* turn the map to slice */
-	teams := make([]*pb.PlayerTeam, 0)
+	/* now get all jersey numbers for that player in the team */
+	for _, team := range teams {
 
-	for _, team := range teamsMap {
-		teams = append(teams, team)
+		rows, err = database.db.Query(`
+			SELECT
+				DISTINCT JerseyNumber
+			FROM
+				PlayerGameStats
+			WHERE
+				PlayerId = $1 AND TeamId = $2
+		`, playerId, team.Team.TeamId)
+
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("Error getting jersey numbers for player %v of team %v", playerId, team.Team.TeamId)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		for rows.Next() {
+
+			var jNum int32
+
+			err = rows.Scan(&jNum)
+
+			if err != nil {
+				return nil, fmt.Errorf("Error scanning jersey number: %v", err)
+			}
+
+			team.JerseyNumbers = append(team.JerseyNumbers, jNum)
+		}
+
+		err = rows.Err()
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning jersey: %v", err)
+		}
 	}
 
 	return teams, nil
