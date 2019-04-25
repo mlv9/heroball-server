@@ -231,7 +231,7 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 	return joinedStats, nil
 }
 
-func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrder(whereClause string, whereArgs []interface{}, grouping string, groupReturnedValue string, having string, havingArgs []interface{}, ordering string) (*pb.PlayerAggregateStats, int32, error) {
+func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrder(whereClause string, whereArgs []interface{}, grouping string, groupReturnedKey string, having string, havingArgs []interface{}, ordering string) (*pb.PlayerAggregateStats, int32, error) {
 
 	/* append to totals */
 	aggregateStats := &pb.PlayerAggregateStats{
@@ -239,11 +239,11 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 	}
 
 	/* if missing, lets fake it */
-	if groupReturnedValue == "" {
-		groupReturnedValue = "0,"
+	if groupReturnedKey == "" {
+		groupReturnedKey = "0,"
 	}
 
-	var groupedValue int32
+	var groupedKey int32
 
 	err := database.db.QueryRow(fmt.Sprintf(`
 		SELECT
@@ -274,8 +274,8 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 		%v
 		%v
 		%v`,
-		groupReturnedValue, whereClause, grouping, having, ordering), append(whereArgs, havingArgs...)...).Scan(
-		&groupedValue,
+		groupReturnedKey, whereClause, grouping, having, ordering), append(whereArgs, havingArgs...)...).Scan(
+		&groupedKey,
 		&aggregateStats.Count,
 		&aggregateStats.TotalStats.TwoPointFGA,
 		&aggregateStats.TotalStats.TwoPointFGM,
@@ -302,7 +302,7 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 		return nil, 0, err
 	}
 
-	return aggregateStats, groupedValue, nil
+	return aggregateStats, groupedKey, nil
 }
 
 func (database *HeroBallDatabase) getResultForGame(gameId int32) (*pb.GameResult, error) {
@@ -365,6 +365,10 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 
 		if err != nil {
 			return nil, err
+		}
+
+		if homeTeamStats == nil || awayTeamStats == nil {
+			return nil, fmt.Errorf("Was not able to find stats for game")
 		}
 
 		results = append(results, &pb.GameResult{
