@@ -859,12 +859,13 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 		FROM
 			PlayerGameStats
 		LEFT JOIN
-			Teams ON Teams.TeamId = PlayerTeams.TeamId
+			Teams ON Teams.TeamId = PlayerGameStats.TeamId
 		LEFT JOIN
 			Games ON PlayerGameStats.GameId = Games.GameId
-		WHERE PlayerGameStats.PlayerId = $1
+		WHERE 
+			PlayerGameStats.PlayerId = $1
 		ORDER BY
-			Games.GateTime DESC
+			Games.GameTime DESC
 		`, playerId)
 
 	if err == sql.ErrNoRows {
