@@ -852,22 +852,18 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 	}
 
 	rows, err := database.db.Query(`
-		WITH PlayerTeams AS (
-			SELECT
-				DISTINCT TeamId
-			FROM
-				PlayerGameStats
-			WHERE PlayerGameStats.PlayerId = $1)
 		SELECT
-			PlayerTeams.TeamId,
+			DISTINCT PlayerGameStats.TeamId,
 			Teams.Name,
 			PlayerGameStats.JerseyNumber
 		FROM
-			PlayerTeams
-		LEFT JOIN
-			PlayerGameStats ON PlayerGameStats.TeamId = PlayerTeams.TeamId
+			PlayerGameStats
 		LEFT JOIN
 			Teams ON Teams.TeamId = PlayerTeams.TeamId
+		LEFT JOIN
+			Games ON PlayerGameStats.GameId = Games.GameId
+		ORDER BY
+			Games.GateTime DESC
 		WHERE PlayerGameStats.PlayerId = $1
 	`, playerId)
 
@@ -879,9 +875,11 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 		return nil, fmt.Errorf("Error getting teams for player: %v", err)
 	}
 
-	teams := make([]*pb.PlayerTeam, 0)
+	teamsMap := make(map[int32]*pb.PlayerTeam)
 
 	for rows.Next() {
+
+		var jerseyNumber int32
 
 		playerTeam := &pb.PlayerTeam{
 			Team: &pb.Team{},
@@ -890,19 +888,33 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 		err = rows.Scan(
 			&playerTeam.Team.TeamId,
 			&playerTeam.Team.Name,
-			&playerTeam.JerseyNumber)
+			&jerseyNumber)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error scanning team: %v", err)
 		}
 
-		teams = append(teams, playerTeam)
+		_, exists := teamsMap[playerTeam.Team.TeamId]
+
+		if !exists {
+			playerTeam.JerseyNumbers = []int32{jerseyNumber}
+			teamsMap[playerTeam.Team.TeamId] = playerTeam
+		} else {
+			teamsMap[playerTeam.Team.TeamId].JerseyNumbers = append(teamsMap[playerTeam.Team.TeamId].JerseyNumbers, jerseyNumber)
+		}
 	}
 
 	err = rows.Err()
 
 	if err != nil {
 		return nil, fmt.Errorf("Error from scan: %v", err)
+	}
+
+	/* turn the map to slice */
+	teams := make([]*pb.PlayerTeam, 0)
+
+	for _, team := range teamsMap {
+		teams = append(teams, team)
 	}
 
 	return teams, nil
