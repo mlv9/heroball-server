@@ -1189,7 +1189,11 @@ func (database *HeroBallDatabase) getCompetitionStatsLeaders(competitionId int32
 		return nil, err
 	}
 
+	fmt.Printf("Rounds in comp: %v", roundsInComp)
+
 	requiredGameCount := int32(roundsInComp / 3)
+
+	fmt.Printf("Required games: %v", requiredGameCount)
 
 	statLeaders := &pb.BasicStatsLeaders{}
 
