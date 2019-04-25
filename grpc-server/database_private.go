@@ -109,7 +109,7 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) 
 	playerStats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
 		"PlayerGameStats.PlayerId = $1",
 		[]interface{}{playerId},
-		"GROUP BY PlayerGameStats.PlayerId", "", "", nil, "")
+		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "")
 
 	if err != nil {
 		return nil, err
@@ -390,7 +390,7 @@ func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int
 	stats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
 		"PlayerGameStats.TeamId = $1 AND PlayerGameStats.GameId = $2",
 		[]interface{}{teamId, gameId},
-		"GROUP BY PlayerGameStats.TeamId", "", "", nil, "")
+		"GROUP BY PlayerGameStats.TeamId", "PlayerGameStats.TeamId", "", nil, "")
 
 	return stats, err
 }
