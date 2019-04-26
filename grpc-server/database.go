@@ -70,7 +70,7 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 	recentGameIds := games
 
 	if len(games) > recentGameCount {
-		recentGameIds = games[:recentGameCount-1]
+		recentGameIds = games[:recentGameCount]
 	}
 
 	recentGames, err := database.getGames(recentGameIds)
