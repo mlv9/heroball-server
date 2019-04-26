@@ -518,7 +518,8 @@ func (database *HeroBallDatabase) getGames(gameIds []int32) ([]*pb.Game, error) 
 		LEFT JOIN
 			Locations ON Games.LocationId = Locations.LocationId
 		WHERE
-			GameId = ANY($1)`,
+			GameId = ANY($1)
+		ORDER BY Games.GameTime DESC`,
 		pq.Array(gameIds))
 
 	if err == sql.ErrNoRows {
