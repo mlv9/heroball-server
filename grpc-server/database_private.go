@@ -632,6 +632,7 @@ func (database *HeroBallDatabase) getPlayersForTeam(teamId int32) ([]int32, erro
 	return playerIds, nil
 }
 
+/* returns a list of gameIds, from most recent to least more recent */
 func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error) {
 
 	if teamId <= 0 {
@@ -652,6 +653,8 @@ func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error)
 			Games
 		WHERE
 			AwayTeamId = $1
+		ORDER BY
+			GameTime DESC
 	`, teamId)
 
 	if err == sql.ErrNoRows {
