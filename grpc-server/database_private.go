@@ -643,7 +643,8 @@ func (database *HeroBallDatabase) getGamesForCompetition(competitionId int32) ([
 
 	rows, err := database.db.Query(`
 		SELECT DISTINCT
-			GameId
+			GameId,
+			GameTime
 		FROM
 			Games
 		WHERE
@@ -665,8 +666,9 @@ func (database *HeroBallDatabase) getGamesForCompetition(competitionId int32) ([
 	for rows.Next() {
 
 		var gameId int32
+		var gameTime string
 
-		err = rows.Scan(&gameId)
+		err = rows.Scan(&gameId, &gameTime)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error scanning gameId: %v", err)
