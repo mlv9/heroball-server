@@ -651,8 +651,8 @@ func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error)
 		FROM
 			Games
 		WHERE
-			AwayTeamId = $2
-	`)
+			AwayTeamId = $1
+	`, teamId)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
