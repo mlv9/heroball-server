@@ -641,7 +641,8 @@ func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error)
 
 	rows, err := database.db.Query(`
 		SELECT
-			GameId
+			GameId,
+			GameTime
 		FROM
 			Games
 		WHERE
@@ -650,7 +651,8 @@ func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error)
 		SELECT
 			GameId
 		FROM
-			Games
+			Games,
+			GameTime
 		WHERE
 			AwayTeamId = $1
 		ORDER BY
@@ -670,8 +672,9 @@ func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error)
 	for rows.Next() {
 
 		var gameId int32
+		var gameTime string
 
-		err = rows.Scan(&gameId)
+		err = rows.Scan(&gameId, &gameTime)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error scanning games: %v", err)
