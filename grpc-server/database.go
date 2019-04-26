@@ -58,19 +58,19 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo.Team = team
 
-	games, err := database.getGamesForTeam(teamId)
+	gameIds, err := database.getGamesForTeam(teamId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	teamInfo.GameIds = games
+	teamInfo.GameIds = gameIds
 
 	/* now get some recent games */
-	recentGameIds := games
+	recentGameIds := gameIds
 
-	if len(games) > recentGameCount {
-		recentGameIds = games[:recentGameCount]
+	if len(gameIds) > recentGameCount {
+		recentGameIds = gameIds[:recentGameCount]
 	}
 
 	recentGames, err := database.getGames(recentGameIds)
@@ -160,28 +160,13 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.Locations = locations
 
-	/* now get teams */
-	teamIds, err := database.getCompetitionTeams(competitionId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	teams, err := database.getTeams(teamIds)
+	teams, err := database.getStandingsForCompetition(competitionId)
 
 	if err != nil {
 		return nil, err
 	}
 
 	compInfo.Teams = teams
-
-	standings, err := database.getStandingsForCompetition(competitionId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	compInfo.Standings = standings
 
 	statLeaders, err := database.getStatsLeadersForCompetition(competitionId)
 
@@ -190,6 +175,28 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 	}
 
 	compInfo.StatsLeaders = statLeaders
+
+	/* get all GameIds */
+	gameIds, err := database.getGamesForCompetition(competitionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	/* now get some recent games */
+	recentGameIds := gameIds
+
+	if len(gameIds) > recentGameCount {
+		recentGameIds = gameIds[:recentGameCount]
+	}
+
+	recentGames, err := database.getGames(recentGameIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	compInfo.RecentGames = recentGames
 
 	return compInfo, nil
 }

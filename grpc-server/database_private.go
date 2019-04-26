@@ -632,7 +632,57 @@ func (database *HeroBallDatabase) getPlayersForTeam(teamId int32) ([]int32, erro
 	return playerIds, nil
 }
 
-/* returns a list of gameIds, from most recent to least more recent */
+/* returns a list of gameIds, from most recent to least recent */
+func (database *HeroBallDatabase) getGamesForCompetition(competitionId int32) ([]int32, error) {
+
+	if competitionId <= 0 {
+		return nil, fmt.Errorf("Invalid competitionId")
+	}
+
+	/* get all the games in a competition */
+
+	rows, err := database.db.Query(`
+		SELECT DISTINCT
+			GameId
+		FROM
+			Games
+		WHERE
+			CompetitionId = $1		
+		`, competitionId)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting results for comp: %v", err)
+	}
+
+	gameIds := make([]int32, 0)
+
+	for rows.Next() {
+
+		var gameId int32
+
+		err = rows.Scan(&gameId)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning gameId: %v", err)
+		}
+
+		gameIds = append(gameIds, gameId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error following scan: %v", err)
+	}
+
+	return gameIds, nil
+}
+
+/* returns a list of gameIds, from most recent to least recent */
 func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error) {
 
 	if teamId <= 0 {
@@ -1182,42 +1232,10 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 
 func (database *HeroBallDatabase) getResultsForCompetition(competitionId int32) ([]*pb.GameResult, error) {
 
-	if competitionId <= 0 {
-		return nil, fmt.Errorf("Invalid competitionId")
-	}
-
-	/* get all the games in a competition */
-
-	rows, err := database.db.Query(`
-		SELECT DISTINCT
-			GameId
-		FROM
-			Games
-		WHERE
-			CompetitionId = $1		
-		`, competitionId)
-
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
+	gameIds, err := database.getGamesForCompetition(competitionId)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error getting results for comp: %v", err)
-	}
-
-	gameIds := make([]int32, 0)
-
-	for rows.Next() {
-
-		var gameId int32
-
-		err = rows.Scan(&gameId)
-
-		if err != nil {
-			return nil, fmt.Errorf("Error scanning gameId: %v", err)
-		}
-
-		gameIds = append(gameIds, gameId)
+		return nil, err
 	}
 
 	return database.getResultsForGames(gameIds)
