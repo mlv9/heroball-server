@@ -647,7 +647,9 @@ func (database *HeroBallDatabase) getGamesForCompetition(competitionId int32) ([
 		FROM
 			Games
 		WHERE
-			CompetitionId = $1		
+			CompetitionId = $1
+		ORDER BY
+			GameTime DESC
 		`, competitionId)
 
 	if err == sql.ErrNoRows {
