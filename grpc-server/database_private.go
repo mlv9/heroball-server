@@ -649,10 +649,10 @@ func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error)
 			HomeTeamId = $1
 		UNION
 		SELECT
-			GameId
-		FROM
-			Games,
+			GameId,
 			GameTime
+		FROM
+			Games
 		WHERE
 			AwayTeamId = $1
 		ORDER BY
