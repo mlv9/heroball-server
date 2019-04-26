@@ -632,6 +632,60 @@ func (database *HeroBallDatabase) getPlayersForTeam(teamId int32) ([]int32, erro
 	return playerIds, nil
 }
 
+func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error) {
+
+	if teamId <= 0 {
+		return nil, fmt.Errorf("Invalid teamId")
+	}
+
+	rows, err := database.db.Query(`
+		SELECT
+			GameId
+		FROM
+			Games
+		WHERE
+			HomeTeamId = $1
+		UNION
+		SELECT
+			GameId
+		FROM
+			Games
+		WHERE
+			AwayTeamId = $2
+	`)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	games := make([]int32, 0)
+
+	for rows.Next() {
+
+		var gameId int32
+
+		err = rows.Scan(&gameId)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning games: %v", err)
+		}
+
+		games = append(games, gameId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error following scan: %v", err)
+	}
+
+	return games, nil
+}
+
 func (database *HeroBallDatabase) getPlayersInGame(gameId int32) ([]int32, error) {
 
 	if gameId <= 0 {
