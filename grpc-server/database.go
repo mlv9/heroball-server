@@ -183,6 +183,8 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 		return nil, err
 	}
 
+	compInfo.GameIds = gameIds
+
 	/* now get some recent games */
 	recentGameIds := gameIds
 
