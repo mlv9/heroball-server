@@ -642,7 +642,7 @@ func (database *HeroBallDatabase) getGamesForCompetition(competitionId int32) ([
 	/* get all the games in a competition */
 
 	rows, err := database.db.Query(`
-		SELECT DISTINCT
+		SELECT
 			GameId,
 			GameTime
 		FROM
