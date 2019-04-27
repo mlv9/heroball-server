@@ -17,6 +17,11 @@ INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES
     ('Steven', 'center', 'something2@email.com', 1999, 'Some Description For Steven'),
     ('Jake', 'point-guard', 'something3@email.com', 2007, 'Some Description For Jake'),
     ('Andrew', 'small-forward', 'something4@email.com', 2012, 'Some Description For Andrew'),
+    ('Peter', 'small-forward', 'something4@email.com', 2012, 'Some Description For Peter'),
+    ('John', 'small-forward', 'something4@email.com', 2012, 'Some Description For John'),
+    ('Aaron', 'power-forward', 'something4@email.com', 2012, 'Some Description For Aaron'),
+    ('Mike', 'shooting-guard', 'something4@email.com', 2012, 'Some Description For Mike'),
+    ('Jamaal', 'small-forward', 'something4@email.com', 2012, 'Some Description For Jamaal'),
     ('Matthew', 'guard', 'something@email.com', 1998, 'Some Description');
 
 INSERT INTO Games (
@@ -69,13 +74,13 @@ INSERT INTO PlayerGameStats (
         (3, 8, 1, 11, 1, 4, 0, 3, 0, 0, 2, 6, 0, 0, 0, 2, 1, 0, 0, 40),
         (3, 9, 1, 11, 1, 4, 0, 3, 0, 0, 2, 6, 0, 0, 0, 2, 1, 0, 0, 40),
         (3, 10, 1, 11, 1, 4, 0, 3, 0, 0, 2, 6, 0, 0, 0, 2, 1, 0, 0, 40),
-        (2, 1, 2, 2, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (4, 1, 2, 2, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
         (4, 2, 2, 3, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (2, 3, 2, 4, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (3, 4, 2, 5, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (3, 5, 2, 6, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (2, 6, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (3, 7, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (3, 8, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (3, 9, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
-        (3, 10, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21);
+        (4, 3, 2, 4, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (4, 4, 2, 5, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (4, 5, 2, 6, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (5, 6, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (5, 7, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (5, 8, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (5, 9, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21),
+        (5, 10, 2, 7, 2, 10, 0, 0, 1, 2, 3, 4, 5, 2, 4, 3, 4, 2, 1, 21);
