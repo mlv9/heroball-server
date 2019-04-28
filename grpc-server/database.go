@@ -270,6 +270,7 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 
 	info.Teams = teams
 
+	/* TODO - we could do this client side with team stats */
 	totalStats, err := database.getPlayerTotalStatsForAllTime(playerId)
 
 	if err != nil {
