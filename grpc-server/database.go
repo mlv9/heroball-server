@@ -278,5 +278,29 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 
 	info.Stats = totalStats
 
+	/* get games */
+	gameIds, err := database.getGamesForPlayer(playerId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	info.GameIds = gameIds
+
+	/* now get some recent games */
+	recentGameIds := gameIds
+
+	if len(gameIds) > recentGameCount {
+		recentGameIds = gameIds[:recentGameCount]
+	}
+
+	recentGames, err := database.getGames(recentGameIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	info.RecentGames = recentGames
+
 	return info, nil
 }
