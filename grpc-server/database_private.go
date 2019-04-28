@@ -100,6 +100,24 @@ func (database *HeroBallDatabase) getPlayerStatsForGame(playerId int32, gameId i
 	return stats[0], nil
 }
 
+func (database *HeroBallDatabase) getPlayerTotalStatsForTeam(playerId int32, teamId int32) (*pb.PlayerAggregateStats, error) {
+
+	if playerId <= 0 {
+		return nil, fmt.Errorf("Invalid playerId")
+	}
+
+	playerStats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
+		"PlayerGameStats.PlayerId = $1 AND PlayerGameStats.TeamId = $2",
+		[]interface{}{playerId, teamId},
+		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return playerStats, nil
+}
+
 func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) (*pb.PlayerAggregateStats, error) {
 
 	if playerId <= 0 {
@@ -1065,6 +1083,14 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 		}
 
 		playerTeam.Competition = comp
+
+		playerStats, err := database.getPlayerTotalStatsForTeam(playerId, playerTeam.Team.TeamId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		playerTeam.Stats = playerStats
 
 		teams = append(teams, playerTeam)
 	}
