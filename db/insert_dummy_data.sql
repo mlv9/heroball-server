@@ -22,7 +22,8 @@ INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES
     ('Aaron', 'power-forward', 'something4@email.com', 2012, 'Some Description For Aaron'),
     ('Mike', 'shooting-guard', 'something4@email.com', 2012, 'Some Description For Mike'),
     ('Jamaal', 'small-forward', 'something4@email.com', 2012, 'Some Description For Jamaal'),
-    ('Matthew', 'guard', 'something@email.com', 1998, 'Some Description');
+    ('Craig S', 'guard', 'something@email.com', 1998, 'Some Description'),
+    ('Matthew', 'center', 'something@email.com', 1998, 'Some Description');
 
 INSERT INTO Games (
     CompetitionId, 
