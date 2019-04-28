@@ -701,7 +701,7 @@ func (database *HeroBallDatabase) getGamesForPlayer(playerId int32) ([]int32, er
 		PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 	WHERE
 		PlayerGameStats.PlayerId = $1
-`, playerId)
+	`, playerId)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -1019,11 +1019,14 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 	rows, err := database.db.Query(`
 		SELECT
 			DISTINCT PlayerGameStats.TeamId,
+			Games.CompetitionId,
 			Teams.Name
 		FROM
 			PlayerGameStats
 		LEFT JOIN
 			Teams ON Teams.TeamId = PlayerGameStats.TeamId
+		LEFT JOIN
+			Games ON PlayerGameStats.GameId = Games.GameId
 		WHERE 
 			PlayerGameStats.PlayerId = $1
 		`, playerId)
@@ -1044,13 +1047,24 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 			Team: &pb.Team{},
 		}
 
+		var compId int32
+
 		err = rows.Scan(
 			&playerTeam.Team.TeamId,
+			&compId,
 			&playerTeam.Team.Name)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error scanning team: %v", err)
 		}
+
+		comp, err := database.getCompetition(compId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		playerTeam.Competition = comp
 
 		teams = append(teams, playerTeam)
 	}
