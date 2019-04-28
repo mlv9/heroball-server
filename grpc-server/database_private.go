@@ -698,7 +698,7 @@ func (database *HeroBallDatabase) getGamesForPlayer(playerId int32) ([]int32, er
 	FROM
 		Games
 	LEFT JOIN
-		PlayerGameState ON Games.GameId = PlayerGameStats.GameId
+		PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 	WHERE
 		PlayerGameStats.PlayerId = $1
 `, playerId)
