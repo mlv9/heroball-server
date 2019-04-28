@@ -276,7 +276,7 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 		return nil, fmt.Errorf("Error getting all stats for player: %v", err)
 	}
 
-	info.Stats = totalStats
+	info.StatsAllTime = totalStats
 
 	/* get games */
 	gameIds, err := database.getGamesForPlayer(playerId)
