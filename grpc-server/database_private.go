@@ -143,11 +143,7 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 	rows, err := database.db.Query(fmt.Sprintf(`
 		SELECT
 			PlayerGameStats.StatsId,
-			Leagues.LeagueId,
-			Leagues.Name,
-			Leagues.Division,
-			Games.CompetitionId,
-			Competitions.Name,
+			PlayerGameStats.GameId,
 			Teams.TeamId,
 			Teams.Name,
 			Players.PlayerId,
@@ -196,9 +192,6 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 	for rows.Next() {
 
 		stats := &pb.PlayerGameStats{
-			Competition: &pb.Competition{
-				League: &pb.League{},
-			},
 			Team:   &pb.Team{},
 			Player: &pb.Player{},
 			Stats:  &pb.Stats{},
@@ -206,11 +199,7 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 
 		err = rows.Scan(
 			&stats.StatsId,
-			&stats.Competition.League.LeagueId,
-			&stats.Competition.League.Name,
-			&stats.Competition.League.Division,
-			&stats.Competition.CompetitionId,
-			&stats.Competition.Name,
+			&stats.GameId,
 			&stats.Team.TeamId,
 			&stats.Team.Name,
 			&stats.Player.PlayerId,
