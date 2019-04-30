@@ -303,5 +303,20 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 
 	info.RecentGames = recentGames
 
+	recentStats := make([]*pb.PlayerGameStats, 0)
+
+	for _, game := range info.RecentGames {
+
+		playerStats, err := database.getPlayerStatsForGame(playerId, game.GameId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		recentStats = append(recentStats, playerStats)
+	}
+
+	info.RecentStats = recentStats
+
 	return info, nil
 }
