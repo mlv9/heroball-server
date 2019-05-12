@@ -46,7 +46,7 @@ func (database *HeroBallDatabase) getPlayerProfile(playerId int32) (*pb.PlayerPr
 	return profile, nil
 }
 
-func (database *HeroBallDatabase) getPlayer(playerId int32) (*pb.Player, error) {
+func (database *HeroBallDatabase) getPlayerById(playerId int32) (*pb.Player, error) {
 
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
@@ -402,7 +402,7 @@ func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int
 	return stats, err
 }
 
-func (database *HeroBallDatabase) getCompetition(competitionId int32) (*pb.Competition, error) {
+func (database *HeroBallDatabase) getCompetitionById(competitionId int32) (*pb.Competition, error) {
 
 	if competitionId <= 0 {
 		return nil, fmt.Errorf("Invalid competitionId")
@@ -442,9 +442,9 @@ func (database *HeroBallDatabase) getCompetition(competitionId int32) (*pb.Compe
 	return comp, nil
 }
 
-func (database *HeroBallDatabase) getGame(gameId int32) (*pb.Game, error) {
+func (database *HeroBallDatabase) getGameById(gameId int32) (*pb.Game, error) {
 
-	games, err := database.getGames([]int32{gameId})
+	games, err := database.getGamesById([]int32{gameId})
 
 	if err != nil {
 		return nil, err
@@ -480,9 +480,9 @@ func (database *HeroBallDatabase) getLocation(locationId int32) (*pb.Location, e
 	return locations[0], nil
 }
 
-func (database *HeroBallDatabase) getTeam(teamId int32) (*pb.Team, error) {
+func (database *HeroBallDatabase) getTeamById(teamId int32) (*pb.Team, error) {
 
-	teams, err := database.getTeams([]int32{teamId})
+	teams, err := database.getTeamsById([]int32{teamId})
 
 	if err != nil {
 		return nil, err
@@ -499,7 +499,7 @@ func (database *HeroBallDatabase) getTeam(teamId int32) (*pb.Team, error) {
 	return teams[0], nil
 }
 
-func (database *HeroBallDatabase) getGames(gameIds []int32) ([]*pb.Game, error) {
+func (database *HeroBallDatabase) getGamesById(gameIds []int32) ([]*pb.Game, error) {
 
 	if gameIds == nil {
 		return nil, fmt.Errorf("Invalid gameIds")
@@ -577,7 +577,7 @@ func (database *HeroBallDatabase) getGames(gameIds []int32) ([]*pb.Game, error) 
 		game.Result = result
 
 		/* get the competition */
-		comp, err := database.getCompetition(competitionId)
+		comp, err := database.getCompetitionById(competitionId)
 
 		if err != nil {
 			return nil, err
@@ -1065,7 +1065,7 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 			return nil, fmt.Errorf("Error scanning team: %v", err)
 		}
 
-		comp, err := database.getCompetition(compId)
+		comp, err := database.getCompetitionById(compId)
 
 		if err != nil {
 			return nil, err
@@ -1133,7 +1133,7 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 	return teams, nil
 }
 
-func (database *HeroBallDatabase) getTeams(teamIds []int32) ([]*pb.Team, error) {
+func (database *HeroBallDatabase) getTeamsById(teamIds []int32) ([]*pb.Team, error) {
 
 	if teamIds == nil {
 		return nil, fmt.Errorf("Invalid teamIds")
@@ -1253,7 +1253,7 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 		if !exists {
 
 			/* get the team */
-			team, err := database.getTeam(result.HomeTeamId)
+			team, err := database.getTeamById(result.HomeTeamId)
 
 			if err != nil {
 				return nil, err
@@ -1278,7 +1278,7 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 		if !exists {
 
 			/* get the team */
-			team, err := database.getTeam(result.AwayTeamId)
+			team, err := database.getTeamById(result.AwayTeamId)
 
 			if err != nil {
 				return nil, err
@@ -1497,7 +1497,7 @@ func (database *HeroBallDatabase) getStatsLeaders(competitionId int32, requiredG
 	}
 
 	if pointsLeader != nil {
-		player, err := database.getPlayer(playerId)
+		player, err := database.getPlayerById(playerId)
 
 		if err != nil {
 			return nil, err
@@ -1511,7 +1511,7 @@ func (database *HeroBallDatabase) getStatsLeaders(competitionId int32, requiredG
 			return nil, err
 		}
 
-		team, err := database.getTeam(teamId)
+		team, err := database.getTeamById(teamId)
 
 		if err != nil {
 			return nil, err

@@ -50,7 +50,7 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo := &pb.TeamInfo{}
 
-	team, err := database.getTeam(teamId)
+	team, err := database.getTeamById(teamId)
 
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 		recentGameIds = gameIds[:recentGameCount]
 	}
 
-	recentGames, err := database.getGames(recentGameIds)
+	recentGames, err := database.getGamesById(recentGameIds)
 
 	if err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 		return nil, err
 	}
 
-	competition, err := database.getCompetition(compId)
+	competition, err := database.getCompetitionById(compId)
 
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 	compInfo := &pb.CompetitionInfo{}
 
 	/* now fill it out */
-	comp, err := database.getCompetition(competitionId)
+	comp, err := database.getCompetitionById(competitionId)
 
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 		recentGameIds = gameIds[:recentGameCount]
 	}
 
-	recentGames, err := database.getGames(recentGameIds)
+	recentGames, err := database.getGamesById(recentGameIds)
 
 	if err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func (database *HeroBallDatabase) GetGameInfo(gameId int32) (*pb.GameInfo, error
 
 	gameInfo := &pb.GameInfo{}
 
-	game, err := database.getGame(gameId)
+	game, err := database.getGameById(gameId)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game: %v", err)
@@ -295,7 +295,7 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 		recentGameIds = gameIds[:recentGameCount]
 	}
 
-	recentGames, err := database.getGames(recentGameIds)
+	recentGames, err := database.getGamesById(recentGameIds)
 
 	if err != nil {
 		return nil, err
