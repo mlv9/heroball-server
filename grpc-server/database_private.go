@@ -745,7 +745,7 @@ func (database *HeroBallDatabase) getGamesForPlayer(playerId int32) ([]int32, er
 }
 
 /* returns a list of gameIds, from most recent to least recent */
-func (database *HeroBallDatabase) getGamesForTeam(teamId int32) ([]int32, error) {
+func (database *HeroBallDatabase) getGameIdsForTeam(teamId int32) ([]int32, error) {
 
 	if teamId <= 0 {
 		return nil, fmt.Errorf("Invalid teamId")

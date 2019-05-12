@@ -58,7 +58,7 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo.Team = team
 
-	gameIds, err := database.getGamesForTeam(teamId)
+	gameIds, err := database.getGameIdsForTeam(teamId)
 
 	if err != nil {
 		return nil, err
