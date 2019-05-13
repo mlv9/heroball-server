@@ -349,7 +349,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			(cardinality($3::int[]) = 0 OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 		ORDER BY
 			Games.GameTime DESC
-		LIMIT $4 
+		LIMIT $4
 		OFFSET $5
 	`,
 		pq.Array(filter.GetCompetitionIds()),
@@ -403,6 +403,12 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 	if nextOffset > totalGames {
 		nextOffset = totalGames
 	}
+
+	fmt.Printf("Returning Games: %+v\n", &pb.GamesCursor{
+		Total:      totalGames,
+		NextOffset: nextOffset,
+		Games:      games,
+	})
 
 	return &pb.GamesCursor{
 		Total:      totalGames,
