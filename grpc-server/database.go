@@ -296,8 +296,26 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		return nil, fmt.Errorf("Invalid count")
 	}
 
-	var totalGames int32
+	/* we cant pass null to pq.Array, so converty to empty arrays if nil */
+	compIds := filter.GetCompetitionIds()
 
+	if compIds == nil {
+		compIds = []int32{}
+	}
+
+	teamIds := filter.GetTeamIds()
+
+	if teamIds == nil {
+		teamIds = []int32{}
+	}
+
+	playerIds := filter.GetPlayerIds()
+
+	if playerIds == nil {
+		playerIds = []int32{}
+	}
+
+	var totalGames int32
 	/* get the count - potentially expensive for each cursor page... */
 	err := database.db.QueryRow(`
 		SELECT
@@ -311,9 +329,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			($2 = '{}' OR PlayerGameStats.PlayerId = ANY($2)) AND
 			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 	`,
-		pq.Array(filter.GetCompetitionIds()),
-		pq.Array(filter.GetTeamIds()),
-		pq.Array(filter.GetPlayerIds())).Scan(&totalGames)
+		pq.Array(compIds),
+		pq.Array(teamIds),
+		pq.Array(playerIds)).Scan(&totalGames)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game count for cursor: %v", err)
@@ -348,9 +366,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		LIMIT $4 
 		OFFSET $5
 	`,
-		pq.Array(filter.GetCompetitionIds()),
-		pq.Array(filter.GetTeamIds()),
-		pq.Array(filter.GetPlayerIds()),
+		pq.Array(compIds),
+		pq.Array(teamIds),
+		pq.Array(playerIds),
 		count,
 		offset)
 
