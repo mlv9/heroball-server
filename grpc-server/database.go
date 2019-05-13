@@ -299,7 +299,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 
 	var totalGames int32
 
-	log.Printf("PlayerArray: %+v", pq.Array(int64[]{}))
+	log.Printf("PlayerArray: %+v", pq.Array([]int64{}))
 	log.Printf("Comp array: %+v", pq.Array(filter.GetCompetitionIds()))
 
 	/* get the count - potentially expensive for each cursor page... */
