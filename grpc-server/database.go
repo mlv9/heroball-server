@@ -313,8 +313,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		WHERE
 			(cardinality($1::int[]) = 0 OR Games.CompetitionId = ANY($1)) AND
 			(cardinality($2::int[]) = 0 OR PlayerGameStats.PlayerId = ANY($2)) AND
-			(cardinality($3::int[]) = 0 OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
-	`,
+			(cardinality($3::int[]) = 0 OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))`,
 		pq.Array(filter.GetCompetitionIds()),
 		pq.Array(filter.GetPlayerIds()),
 		pq.Array(filter.GetTeamIds())).Scan(&totalGames)
@@ -330,6 +329,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 
 	/* if no matches, return */
 	if totalGames == 0 {
+		log.Printf("Returning 0 games for filter %v", filter)
 		return &pb.GamesCursor{
 			Total: 0,
 		}, nil
