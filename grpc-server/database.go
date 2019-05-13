@@ -296,26 +296,8 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		return nil, fmt.Errorf("Invalid count")
 	}
 
-	/* we cant pass null to pq.Array, so converty to empty arrays if nil */
-	compIds := filter.GetCompetitionIds()
-
-	if compIds == nil {
-		compIds = []int32{}
-	}
-
-	teamIds := filter.GetTeamIds()
-
-	if teamIds == nil {
-		teamIds = []int32{}
-	}
-
-	playerIds := filter.GetPlayerIds()
-
-	if playerIds == nil {
-		playerIds = []int32{}
-	}
-
 	var totalGames int32
+
 	/* get the count - potentially expensive for each cursor page... */
 	err := database.db.QueryRow(`
 		SELECT
@@ -325,13 +307,13 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		LEFT JOIN
 			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 		WHERE
-			($1 = '{}' OR Games.CompetitionId = ANY($1)) AND
-			($2 = '{}' OR PlayerGameStats.PlayerId = ANY($2)) AND
-			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
+			($1 IS NULL OR Games.CompetitionId = ANY($1)) AND
+			($2 IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
+			($3 IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 	`,
-		pq.Array(compIds),
-		pq.Array(teamIds),
-		pq.Array(playerIds)).Scan(&totalGames)
+		pq.Array(filter.GetCompetitionIds()),
+		pq.Array(filter.GetPlayerIds()),
+		pq.Array(filter.GetTeamIds())).Scan(&totalGames)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game count for cursor: %v", err)
@@ -358,17 +340,17 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		LEFT JOIN
 			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 		WHERE
-			($1 = '{}' OR Games.CompetitionId = ANY($1)) AND
-			($2 = '{}' OR PlayerGameStats.PlayerId = ANY($2)) AND
-			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
+			($1 IS NULL OR Games.CompetitionId = ANY($1)) AND
+			($2 IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
+			($3 IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 		ORDER BY
 			GameTime DESC
 		LIMIT $4 
 		OFFSET $5
 	`,
-		pq.Array(compIds),
-		pq.Array(teamIds),
-		pq.Array(playerIds),
+		pq.Array(filter.GetCompetitionIds()),
+		pq.Array(filter.GetPlayerIds()),
+		pq.Array(filter.GetTeamIds()),
 		count,
 		offset)
 
