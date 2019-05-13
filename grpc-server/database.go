@@ -297,10 +297,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		return nil, fmt.Errorf("Invalid count")
 	}
 
-	var totalGames int32
+	log.Printf("Got request for games from offset %v and count %v with filter %v\n", offset, count, filter)
 
-	log.Printf("PlayerArray: %+v", pq.Array([]int64{}))
-	log.Printf("Comp array: %+v", pq.Array(filter.GetCompetitionIds()))
+	var totalGames int32
 
 	/* get the count - potentially expensive for each cursor page... */
 	err := database.db.QueryRow(`
@@ -344,9 +343,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		LEFT JOIN
 			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 		WHERE
-		(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
-		(cardinality($2::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
-		(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
+			(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
+			(cardinality($2::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
+			(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 		ORDER BY
 			Games.GameTime DESC
 		LIMIT $4
