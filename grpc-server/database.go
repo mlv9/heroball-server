@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
@@ -298,7 +299,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 
 	var totalGames int32
 
-	fmt.Printf("PlayerArray: %v", pq.Array(filter.GetPlayerIds()))
+	log.Printf("PlayerArray: %v", pq.Array(filter.GetPlayerIds()))
 
 	/* get the count - potentially expensive for each cursor page... */
 	err := database.db.QueryRow(`
