@@ -693,7 +693,7 @@ func (database *HeroBallDatabase) getGameIdsForCompetition(competitionId int32) 
 	return gameIds, nil
 }
 
-func (database *HeroBallDatabase) getGamesForPlayer(playerId int32) ([]int32, error) {
+func (database *HeroBallDatabase) getGameIdsForPlayer(playerId int32) ([]int32, error) {
 	if playerId <= 0 {
 		return nil, fmt.Errorf("Invalid playerId")
 	}

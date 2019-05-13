@@ -59,6 +59,19 @@ func (hb *HeroBall) GetPlayerInfo(context context.Context, request *pb.GetPlayer
 	return info, nil
 }
 
+func (hb *HeroBall) GetGames(context context.Context, request *pb.GetGamesRequest) (*pb.GamesCursor, error) {
+
+	/* pass to database layer */
+	games, err := hb.db.GetGamesCursor(request.GetOffset(), request.GetCount(), request.GetFilter())
+
+	if err != nil {
+		log.Printf("Error getting games cursor: %v", err)
+		return nil, err
+	}
+
+	return games, nil
+}
+
 func (hb *HeroBall) GetCompetitionInfo(context context.Context, request *pb.GetCompetitionInfoRequest) (*pb.CompetitionInfo, error) {
 
 	/* pass to database layer */

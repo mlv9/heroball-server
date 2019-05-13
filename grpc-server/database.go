@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 
 	pb "github.com/heroballapp/server/protobuf"
@@ -58,28 +59,15 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo.Team = team
 
-	gameIds, err := database.getGameIdsForTeam(teamId)
+	gameCursor, err := database.GetGamesCursor(0, recentGameCount, &pb.GamesFilter{
+		TeamIds: []int32{teamId},
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	teamInfo.GameIds = gameIds
-
-	/* now get some recent games */
-	recentGameIds := gameIds
-
-	if len(gameIds) > recentGameCount {
-		recentGameIds = gameIds[:recentGameCount]
-	}
-
-	recentGames, err := database.getGamesById(recentGameIds)
-
-	if err != nil {
-		return nil, err
-	}
-
-	teamInfo.RecentGames = recentGames
+	teamInfo.RecentGames = gameCursor
 
 	playerIds, err := database.getPlayersForTeam(teamId)
 
@@ -176,29 +164,15 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.StatsLeaders = statLeaders
 
-	/* get all GameIds */
-	gameIds, err := database.getGameIdsForCompetition(competitionId)
+	gameCursor, err := database.GetGamesCursor(0, recentGameCount, &pb.GamesFilter{
+		CompetitionIds: []int32{competitionId},
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	compInfo.GameIds = gameIds
-
-	/* now get some recent games */
-	recentGameIds := gameIds
-
-	if len(gameIds) > recentGameCount {
-		recentGameIds = gameIds[:recentGameCount]
-	}
-
-	recentGames, err := database.getGamesById(recentGameIds)
-
-	if err != nil {
-		return nil, err
-	}
-
-	compInfo.RecentGames = recentGames
+	compInfo.RecentGames = gameCursor
 
 	return compInfo, nil
 }
@@ -279,44 +253,156 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 
 	info.StatsAllTime = totalStats
 
-	/* get games */
-	gameIds, err := database.getGamesForPlayer(playerId)
+	gameCursor, err := database.GetGamesCursor(0, recentGameCount, &pb.GamesFilter{
+		PlayerIds: []int32{playerId},
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	info.GameIds = gameIds
-
-	/* now get some recent games */
-	recentGameIds := gameIds
-
-	if len(gameIds) > recentGameCount {
-		recentGameIds = gameIds[:recentGameCount]
-	}
-
-	recentGames, err := database.getGamesById(recentGameIds)
-
-	if err != nil {
-		return nil, err
-	}
-
-	info.RecentGames = recentGames
+	info.RecentGames = gameCursor
 
 	recentStats := make([]*pb.PlayerGameStats, 0)
 
-	for _, game := range info.RecentGames {
+	/* if there are recent games, get player stats too */
+	if len(info.RecentGames.Games) != 0 {
+		for _, game := range info.RecentGames.Games {
 
-		playerStats, err := database.getPlayerStatsForGame(playerId, game.GameId)
+			playerStats, err := database.getPlayerStatsForGame(playerId, game.GameId)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
+
+			recentStats = append(recentStats, playerStats)
 		}
 
-		recentStats = append(recentStats, playerStats)
+		info.RecentStats = recentStats
 	}
 
-	info.RecentStats = recentStats
-
 	return info, nil
+}
+
+/* TODO seperate query if null filter, will be much cheaper */
+func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filter *pb.GamesFilter) (*pb.GamesCursor, error) {
+
+	/* get the count across the filter */
+	if offset < 0 {
+		return nil, fmt.Errorf("Invalid offset")
+	}
+
+	if count < 0 {
+		return nil, fmt.Errorf("Invalid count")
+	}
+
+	var totalGames int32
+
+	/* get the count - potentially expensive for each cursor page... */
+	err := database.db.QueryRow(`
+		SELECT
+			COUNT(Games.GameId)
+		FROM
+			Games
+		LEFT JOIN
+			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
+		WHERE
+			($1 = '{}' OR Games.CompetitionId = ANY($1)) AND
+			($2 = '{}' OR PlayerGameStats.PlayerId = ANY($2)) AND
+			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = $3)))
+	`,
+		pq.Array(filter.GetCompetitionIds()),
+		pq.Array(filter.GetTeamIds()),
+		pq.Array(filter.GetPlayerIds())).Scan(&totalGames)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting game count for cursor: %v", err)
+	}
+
+	/* if the count is less than offset, return */
+	if offset < totalGames {
+		return nil, fmt.Errorf("Requesting (%v) past the end of the result set length (%v)", offset, totalGames)
+	}
+
+	/* if no matches, return */
+	if totalGames == 0 {
+		return &pb.GamesCursor{
+			Total: 0,
+		}, nil
+	}
+
+	/* get the gameIds */
+	rows, err := database.db.Query(`
+		SELECT
+			Games.GameId
+		FROM
+			Games
+		LEFT JOIN
+			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
+		WHERE
+			($1 = '{}' OR Games.CompetitionId = ANY($1)) AND
+			($2 = '{}' OR PlayerGameStats.PlayerId = ANY($2)) AND
+			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = $3)))
+		ORDER BY
+			GameTime DESC
+		LIMIT $4 
+		OFFSET $5
+	`,
+		pq.Array(filter.GetCompetitionIds()),
+		pq.Array(filter.GetTeamIds()),
+		pq.Array(filter.GetPlayerIds()),
+		count,
+		offset)
+
+	/* this shouldn't hit */
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("Count mismatch error 62")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	/* otherwise scan the gameIds required */
+	gameIds := make([]int32, 0)
+
+	for rows.Next() {
+
+		var gameId int32
+
+		err = rows.Scan(&gameId)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning games: %v", err)
+		}
+
+		gameIds = append(gameIds, gameId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error following scan: %v", err)
+	}
+
+	/* get the games */
+	games, err := database.getGamesById(gameIds)
+
+	/* return offset and gameIds len */
+	if err != nil {
+		return nil, err
+	}
+
+	/* calculate next offset */
+	nextOffset := offset + int32(len(games))
+
+	if nextOffset > totalGames {
+		nextOffset = totalGames
+	}
+
+	return &pb.GamesCursor{
+		Total:      totalGames,
+		NextOffset: nextOffset,
+		Games:      games,
+	}, nil
 }
