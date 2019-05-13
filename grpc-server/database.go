@@ -316,8 +316,8 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 	`,
 		pq.Array(filter.GetCompetitionIds()),
-		pq.Array(filter.GetPlayerIds()),
-		pq.Array(filter.GetTeamIds())).Scan(&totalGames)
+		pq.Array([]int64{}),
+		pq.Array([]int64{})).Scan(&totalGames)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game count for cursor: %v", err)
