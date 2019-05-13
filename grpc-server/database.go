@@ -315,7 +315,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			($2 = '{}' OR PlayerGameStats.PlayerId = ANY($2)) AND
 			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 	`,
-		pq.Array(filter.GetCompetitionIds()),
+		pq.Array([]int64{1}),
 		pq.Array([]int64{}),
 		pq.Array([]int64{})).Scan(&totalGames)
 
