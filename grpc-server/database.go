@@ -310,9 +310,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		LEFT JOIN
 			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 		WHERE
-			(cardinality($1) = 0 OR Games.CompetitionId = ANY($1)) AND
-			(cardinality($2) = 0 OR PlayerGameStats.PlayerId = ANY($2)) AND
-			(cardinality($3) = 0 OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
+			($1 = '{[]}' OR Games.CompetitionId = ANY($1)) AND
+			($2 = '{[]}' OR PlayerGameStats.PlayerId = ANY($2)) AND
+			($3 = '{[]}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 	`,
 		pq.Array(filter.GetCompetitionIds()),
 		pq.Array(filter.GetPlayerIds()),
@@ -343,9 +343,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		LEFT JOIN
 			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 		WHERE
-			(cardinality($1) = 0 OR Games.CompetitionId = ANY($1)) AND
-			(cardinality($2) = 0 OR PlayerGameStats.PlayerId = ANY($2)) AND
-			(cardinality($3) = 0 OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
+			($1 = '{[]}' OR Games.CompetitionId = ANY($1)) AND
+			($2 = '{[]}' OR PlayerGameStats.PlayerId = ANY($2)) AND
+			($3 = '{[]}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 		ORDER BY
 			GameTime DESC
 		LIMIT $4 
