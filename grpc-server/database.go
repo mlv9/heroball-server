@@ -344,9 +344,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		LEFT JOIN
 			PlayerGameStats ON Games.GameId = PlayerGameStats.GameId
 		WHERE
-			(Games.CompetitionId = ANY($1)) AND
-			(PlayerGameStats.PlayerId = ANY($2)) AND
-			((Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
+			(cardinality($1::int[]) = 0 OR Games.CompetitionId = ANY($1)) AND
+			(cardinality($2::int[]) = 0 OR PlayerGameStats.PlayerId = ANY($2)) AND
+			(cardinality($3::int[]) = 0 OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 		ORDER BY
 			Games.GameTime DESC
 		LIMIT $4 
