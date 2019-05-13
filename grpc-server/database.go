@@ -299,8 +299,8 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 
 	var totalGames int32
 
-	log.Printf("PlayerArray: %v", pq.Array(filter.GetPlayerIds()))
-	log.Printf("Comp array: %v", pq.Array(filter.GetCompetitionIds()))
+	log.Printf("PlayerArray: %+v", pq.Array(filter.GetPlayerIds()))
+	log.Printf("Comp array: %+v", pq.Array(filter.GetCompetitionIds()))
 
 	/* get the count - potentially expensive for each cursor page... */
 	err := database.db.QueryRow(`
@@ -315,9 +315,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			($2 = '{}' OR PlayerGameStats.PlayerId = ANY($2)) AND
 			($3 = '{}' OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
 	`,
-		pq.Array([]int64{1}),
-		pq.Array([]int64{}),
-		pq.Array([]int64{})).Scan(&totalGames)
+		pq.Array(filter.GetCompetitionIds()),
+		pq.Array(filter.GetPlayerIds()),
+		pq.Array(filter.GetTeamIds())).Scan(&totalGames)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game count for cursor: %v", err)
