@@ -297,8 +297,6 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		return nil, fmt.Errorf("Invalid count")
 	}
 
-	log.Printf("Got request for games from offset %v and count %v with filter %v\n", offset, count, filter)
-
 	var totalGames int32
 
 	/* get the count - potentially expensive for each cursor page... */
@@ -330,7 +328,8 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 	if totalGames == 0 {
 		log.Printf("Returning 0 games for filter %v", filter)
 		return &pb.GamesCursor{
-			Total: 0,
+			Filter: filter,
+			Total:  0,
 		}, nil
 	}
 
@@ -406,15 +405,10 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		nextOffset = totalGames
 	}
 
-	fmt.Printf("Returning Games: %+v\n", &pb.GamesCursor{
-		Total:      totalGames,
-		NextOffset: nextOffset,
-		Games:      games,
-	})
-
 	return &pb.GamesCursor{
 		Total:      totalGames,
 		NextOffset: nextOffset,
 		Games:      games,
+		Filter:     filter,
 	}, nil
 }
