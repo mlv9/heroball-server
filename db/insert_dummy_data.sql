@@ -51,7 +51,7 @@ INSERT INTO Games (
     (1,1,1,2,'2019-4-28'::timestamp),
     (1,1,1,2,'2019-4-29'::timestamp),
     (1,1,1,2,'2019-4-30'::timestamp),
-    (1,1,2,1,'2019-4-31'::timestamp);
+    (1,1,2,1,'2019-5-1'::timestamp);
 
 INSERT INTO PlayerGameStats (
     PlayerId,
