@@ -304,7 +304,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 	/* get the count - potentially expensive for each cursor page... */
 	err := database.db.QueryRow(`
 		SELECT
-			COUNT(Games.GameId)
+			COUNT(DISTINCT Games.GameId)
 		FROM
 			Games
 		LEFT JOIN
@@ -337,7 +337,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 	/* get the gameIds */
 	rows, err := database.db.Query(`
 		SELECT
-			Games.GameId
+			DISTINCT
+			Games.GameId,
+			Games.GameTime
 		FROM
 			Games
 		LEFT JOIN
@@ -372,8 +374,9 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 	for rows.Next() {
 
 		var gameId int32
+		var gameTime string
 
-		err = rows.Scan(&gameId)
+		err = rows.Scan(&gameId, &gameTime)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error scanning games: %v", err)
