@@ -394,14 +394,14 @@ func (database *HeroBallDatabase) GetPlayersCursor(offset int32, count int32, fi
 		nextOffset = totalPlayers
 	}
 
+	log.Printf("Returning %v players for request from filter %+v for count %v from offset %v", len(players), filter, count, offset)
+
 	return &pb.PlayersCursor{
 		Total:      totalPlayers,
 		NextOffset: nextOffset,
 		Players:    players,
 		Filter:     filter,
 	}, nil
-
-	return nil, nil
 }
 
 /* TODO seperate query if null filter, will be much cheaper */
@@ -523,6 +523,8 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 	if nextOffset > totalGames {
 		nextOffset = totalGames
 	}
+
+	log.Printf("Returning %v games for request from filter %+v for count %v from offset %v", len(games), filter, count, offset)
 
 	return &pb.GamesCursor{
 		Total:      totalGames,

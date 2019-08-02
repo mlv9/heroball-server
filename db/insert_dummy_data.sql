@@ -4,7 +4,7 @@ INSERT INTO Leagues (Name, Division) VALUES
 
 INSERT INTO Competitions (Name, LeagueId) VALUES
     ('Winter 2019', 1),
-    ('Winter 2019', 2);
+    ('Winter 2020', 2);
 
 INSERT INTO Teams (Name) VALUES
     ('Cannons'),
