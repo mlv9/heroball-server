@@ -336,8 +336,8 @@ func (database *HeroBallDatabase) GetPlayersCursor(offset int32, count int32, fi
 			(cardinality($2::int[]) IS NULL OR PlayerGameStats.TeamId = ANY($2))
 		ORDER BY
 			Players.Name DESC
-		LIMIT $4
-		OFFSET $5
+		LIMIT $3
+		OFFSET $4
 		`,
 		pq.Array(filter.GetCompetitionIds()),
 		pq.Array(filter.GetTeamIds()),
