@@ -409,11 +409,11 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 
 	/* get the count across the filter */
 	if offset < 0 {
-		return nil, fmt.Errorf("Invalid offset")
+		return nil, fmt.Errorf("Invalid offset, must be zero or greater")
 	}
 
-	if count < 0 {
-		return nil, fmt.Errorf("Invalid count")
+	if count <= 0 {
+		return nil, fmt.Errorf("Invalid count, must be greater than zero")
 	}
 
 	var totalGames int32
