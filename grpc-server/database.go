@@ -277,11 +277,11 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 func (database *HeroBallDatabase) GetPlayersCursor(offset int32, count int32, filter *pb.PlayersFilter) (*pb.PlayersCursor, error) {
 
 	if offset < 0 {
-		return nil, fmt.Errorf("Invalid offset")
+		return nil, fmt.Errorf("Invalid offset, must be zero (ignored) or greater")
 	}
 
-	if count < 0 {
-		return nil, fmt.Errorf("Invalid count")
+	if count <= 0 {
+		return nil, fmt.Errorf("Invalid count, must be greater than zero")
 	}
 
 	var totalPlayers int32
@@ -344,7 +344,7 @@ func (database *HeroBallDatabase) GetPlayersCursor(offset int32, count int32, fi
 		count,
 		offset)
 
-	/* this shouldn't hit */
+	/* this shouldn't hit as we previously did a count */
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("Count mismatch error 63")
 	}
@@ -353,7 +353,7 @@ func (database *HeroBallDatabase) GetPlayersCursor(offset int32, count int32, fi
 		return nil, fmt.Errorf("Error getting players: %v", err)
 	}
 
-	/* otherwise scan the gameIds required */
+	/* otherwise scan the players required */
 	playerIds := make([]int32, 0)
 
 	for rows.Next() {
