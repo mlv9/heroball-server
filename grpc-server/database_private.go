@@ -48,33 +48,75 @@ func (database *HeroBallDatabase) getPlayerProfile(playerId int32) (*pb.PlayerPr
 
 func (database *HeroBallDatabase) getPlayerById(playerId int32) (*pb.Player, error) {
 
-	if playerId <= 0 {
-		return nil, fmt.Errorf("Invalid playerId")
+	players, err := database.getPlayersById([]int32{playerId})
+
+	if err != nil {
+		return nil, err
 	}
 
-	player := &pb.Player{
-		PlayerId: playerId,
+	if players == nil || len(players) == 0 {
+		return nil, fmt.Errorf("Could not find player")
 	}
 
-	err := database.db.QueryRow(`
+	if len(players) != 1 {
+		return nil, fmt.Errorf("Expecting 1 player, got %v", len(players))
+	}
+
+	return players[0], nil
+}
+
+func (database *HeroBallDatabase) getPlayersById(playerIds []int32) ([]*pb.Player, error) {
+
+	if len(playerIds) < 1 {
+		return nil, fmt.Errorf("Must supply a playerId")
+	}
+
+	rows, err := database.db.Query(`
 		SELECT
+			PlayerId,
 			Name,
 			Position
 		FROM 
 			Players
 		WHERE
-			PlayerId = $1
-		`, playerId).Scan(&player.Name, &player.Position)
+			PlayerId = ANY($1)
+		`, pq.Array(playerIds))
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("That player does not exist")
+		return nil, fmt.Errorf("Unable to find any players")
 	}
 
 	if err != nil {
 		return nil, fmt.Errorf("Error in db: %v", err)
 	}
 
-	return player, nil
+	players := make([]*pb.Player, 0)
+
+	/* now scan them all */
+	for rows.Next() {
+
+		player := &pb.Player{}
+
+		err = rows.Scan(
+			&player.PlayerId,
+			&player.Name,
+			&player.Position)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning player: %v", err)
+		}
+
+		players = append(players, player)
+
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("error on db scan: %v", err)
+	}
+
+	return players, nil
 }
 
 func (database *HeroBallDatabase) getPlayerStatsForGame(playerId int32, gameId int32) (*pb.PlayerGameStats, error) {

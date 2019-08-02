@@ -70,26 +70,15 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo.RecentGames = gameCursor
 
-	playerIds, err := database.getPlayersForTeam(teamId)
+	playersCursor, err := database.GetPlayersCursor(0, 0, &pb.PlayersFilter{
+		TeamIds: []int32{teamId},
+	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	players := make([]*pb.PlayerInfo, 0)
-
-	for _, playerId := range playerIds {
-
-		playerInfo, err := database.GetPlayerInfo(playerId)
-
-		if err != nil {
-			return nil, fmt.Errorf("Error getting player info: %v", err)
-		}
-
-		players = append(players, playerInfo)
-	}
-
-	teamInfo.Players = players
+	teamInfo.Players = playersCursor
 
 	/* get the comp */
 	compId, err := database.getCompetitionForTeam(teamId)
@@ -283,6 +272,134 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 	}
 
 	return info, nil
+}
+
+func (database *HeroBallDatabase) GetPlayersCursor(offset int32, count int32, filter *pb.PlayersFilter) (*pb.PlayersCursor, error) {
+
+	if offset < 0 {
+		return nil, fmt.Errorf("Invalid offset")
+	}
+
+	if count < 0 {
+		return nil, fmt.Errorf("Invalid count")
+	}
+
+	var totalPlayers int32
+
+	err := database.db.QueryRow(`
+		SELECT
+			COUNT(DISTINCT Players.PlayerId)
+		FROM
+			Players
+		LEFT JOIN
+			PlayerGameStats ON Players.PlayerId = PlayerGameStats.PlayerId
+		LEFT JOIN
+			Games ON PlayerGameStats.GameId = Games.GameId
+		WHERE
+			(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
+			(cardinality($2::int[]) IS NULL OR PlayerGameStats.TeamId = ANY($2))`,
+		pq.Array(filter.GetCompetitionIds()),
+		pq.Array(filter.GetTeamIds())).Scan(&totalPlayers)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting player count for cursor: %v", err)
+	}
+
+	/* if the count is less than offset, return */
+	if offset > totalPlayers {
+		return nil, fmt.Errorf("Requesting (%v) past the end of the result set length (%v)", offset, totalPlayers)
+	}
+
+	/* if no matches, return */
+	if totalPlayers == 0 {
+		log.Printf("Returning 0 players for filter %v", filter)
+		return &pb.PlayersCursor{
+			Filter: filter,
+			Total:  0,
+		}, nil
+	}
+
+	/* get the playerIds */
+	rows, err := database.db.Query(`
+		SELECT
+			DISTINCT
+			Player.PlayerIds,
+			Player.Name
+		FROM
+			Players
+		LEFT JOIN
+			PlayerGameStats ON Players.PlayerId = PlayerGameStats.PlayerId
+		LEFT JOIN
+			Games ON PlayerGameStats.GameId = Games.GameId
+		WHERE
+			(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
+			(cardinality($2::int[]) IS NULL OR PlayerGameStats.TeamId = ANY($2))
+		ORDER BY
+			Players.Name DESC
+		LIMIT $4
+		OFFSET $5
+		`,
+		pq.Array(filter.GetCompetitionIds()),
+		pq.Array(filter.GetTeamIds()),
+		count,
+		offset)
+
+	/* this shouldn't hit */
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("Count mismatch error 63")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting players: %v", err)
+	}
+
+	/* otherwise scan the gameIds required */
+	playerIds := make([]int32, 0)
+
+	for rows.Next() {
+
+		var playerId int32
+		var name string
+
+		err = rows.Scan(&playerId, &name)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning players: %v", err)
+		}
+
+		playerIds = append(playerIds, playerId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error following scan: %v", err)
+	}
+
+	/* now lets get the players */
+	/* TODO work out what this call should be... */
+	players, err := database.getPlayersById(playerIds)
+
+	/* return offset and gameIds len */
+	if err != nil {
+		return nil, err
+	}
+
+	/* calculate next offset */
+	nextOffset := offset + int32(len(players))
+
+	if nextOffset > totalPlayers {
+		nextOffset = totalPlayers
+	}
+
+	return &pb.PlayersCursor{
+		Total:      totalPlayers,
+		NextOffset: nextOffset,
+		Players:    players,
+		Filter:     filter,
+	}, nil
+
+	return nil, nil
 }
 
 /* TODO seperate query if null filter, will be much cheaper */
