@@ -70,7 +70,9 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo.RecentGames = gameCursor
 
-	playersCursor, err := database.GetPlayersCursor(0, 0, &pb.PlayersFilter{
+	var maxTeamSize int32 = 30
+
+	playersCursor, err := database.GetPlayersCursor(0, maxTeamSize, &pb.PlayersFilter{
 		TeamIds: []int32{teamId},
 	})
 
