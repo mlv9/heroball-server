@@ -323,7 +323,7 @@ func (database *HeroBallDatabase) GetPlayersCursor(offset int32, count int32, fi
 	rows, err := database.db.Query(`
 		SELECT
 			DISTINCT
-			Players.PlayerIds,
+			Players.PlayerId,
 			Players.Name
 		FROM
 			Players
