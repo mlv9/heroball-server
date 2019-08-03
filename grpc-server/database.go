@@ -430,6 +430,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		}
 
 		dateParsed.Time = pDate
+		dateParsed.Valid = true
 	}
 
 	log.Printf("Got date for filter of: %+v\n", dateParsed)
