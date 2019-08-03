@@ -433,8 +433,6 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		dateParsed.Valid = true
 	}
 
-	log.Printf("Got date for filter of: %+v\n", dateParsed)
-
 	var totalGames int32
 
 	/* get the count - potentially expensive for each cursor page... */
