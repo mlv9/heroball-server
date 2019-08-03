@@ -422,7 +422,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 	var dateParsed time.Time
 	var err error
 
-	if date.Day != 0 && date.Month != 0 && date.Year != 0 {
+	if date != nil {
 		dateParsed, err = time.Parse("2006-01-12", fmt.Sprintf("%04d-%02d-%02d", date.Year, date.Month, date.Day))
 
 		if err != nil {
