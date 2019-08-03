@@ -446,7 +446,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
 			(cardinality($2::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
 			(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3))) AND
-			(COALESCE($4 > current_timestamp) IS NULL OR (Games.GameTime >= $4 AND Games.GameTime < $4 + interval '1' day))`,
+			(COALESCE($4 > current_timestamp) IS NULL OR (Games.GameTime >= $4 AND Games.GameTime < $4 + interval '1 day'))`,
 		pq.Array(filter.GetCompetitionIds()),
 		pq.Array(filter.GetPlayerIds()),
 		pq.Array(filter.GetTeamIds()),
@@ -484,7 +484,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
 			(cardinality($2::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
 			(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3))) AND
-			(COALESCE($4 > current_timestamp) IS NULL OR (Games.GameTime >= $4 AND Games.GameTime < $4 + interval '1' day))
+			(COALESCE($4 > current_timestamp) IS NULL OR (Games.GameTime >= $4 AND Games.GameTime < $4 + interval '1 day'))
 		ORDER BY
 			Games.GameTime DESC
 		LIMIT $5
