@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
@@ -416,10 +417,24 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		return nil, fmt.Errorf("Invalid count, must be greater than zero")
 	}
 
+	/* lets validate any dates */
+	date := filter.GetDate()
+	var dateParsed time.Time
+	var err error
+
+	if date.Day != 0 && date.Month != 0 && date.Year != 0 {
+		dateParsed, err = time.Parse("2006-01-12", fmt.Sprintf("%04d-%02d-%02d", date.Year, date.Month, date.Day))
+
+		if err != nil {
+			return nil, fmt.Errorf("Error parsing date: %v", err)
+		}
+
+	}
+
 	var totalGames int32
 
 	/* get the count - potentially expensive for each cursor page... */
-	err := database.db.QueryRow(`
+	err = database.db.QueryRow(`
 		SELECT
 			COUNT(DISTINCT Games.GameId)
 		FROM
@@ -429,10 +444,12 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		WHERE
 			(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
 			(cardinality($2::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
-			(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))`,
+			(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3))) AND
+			($4 IS NULL OR (Games.GameTime >= $4 AND Games.GameTime < $4 + 1))`,
 		pq.Array(filter.GetCompetitionIds()),
 		pq.Array(filter.GetPlayerIds()),
-		pq.Array(filter.GetTeamIds())).Scan(&totalGames)
+		pq.Array(filter.GetTeamIds()),
+		dateParsed).Scan(&totalGames)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error getting game count for cursor: %v", err)
@@ -465,7 +482,8 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		WHERE
 			(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
 			(cardinality($2::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($2)) AND
-			(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3)))
+			(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3))) AND
+			($4 IS NULL OR (Games.GameTime >= $4 AND Games.GameTime < $4 + 1))
 		ORDER BY
 			Games.GameTime DESC
 		LIMIT $4
@@ -474,6 +492,7 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		pq.Array(filter.GetCompetitionIds()),
 		pq.Array(filter.GetPlayerIds()),
 		pq.Array(filter.GetTeamIds()),
+		dateParsed,
 		count,
 		offset)
 
