@@ -487,8 +487,8 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 			(COALESCE($4 > current_timestamp) IS NULL OR (Games.GameTime >= $4 AND Games.GameTime < $4 + interval '1' day))
 		ORDER BY
 			Games.GameTime DESC
-		LIMIT $4
-		OFFSET $5
+		LIMIT $5
+		OFFSET $6
 	`,
 		pq.Array(filter.GetCompetitionIds()),
 		pq.Array(filter.GetPlayerIds()),
