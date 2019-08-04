@@ -170,32 +170,41 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 	return compInfo, nil
 }
 
-func (database *HeroBallDatabase) GetGamesFilterValues() (*pb.GamesFilterValues, error) {
+func (database *HeroBallDatabase) GetHeroBallMetadata(request *pb.GetHeroBallMetadataRequest) (*pb.HeroBallMetadata, error) {
 
-	/* we need competitions, teams, players */
-	competitions, err := database.getAllCompetitions()
+	md := &pb.HeroBallMetadata{}
 
-	if err != nil {
-		return nil, fmt.Errorf("Error getting competitions: %v", err)
+	if request.Competitions {
+		/* we need competitions, teams, players */
+		competitions, err := database.getAllCompetitions()
+
+		if err != nil {
+			return nil, fmt.Errorf("Error getting competitions: %v", err)
+		}
+
+		md.Competitions = competitions
 	}
 
-	teams, err := database.getAllTeams()
+	if request.Teams {
+		teams, err := database.getAllTeams()
 
-	if err != nil {
-		return nil, fmt.Errorf("Error getting teams: %v", err)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting teams: %v", err)
+		}
+		md.Teams = teams
 	}
 
-	players, err := database.getAllPlayers()
+	if request.Players {
+		players, err := database.getAllPlayers()
 
-	if err != nil {
-		return nil, fmt.Errorf("Error getting players: %v", err)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting players: %v", err)
+		}
+
+		md.Players = players
 	}
 
-	return &pb.GamesFilterValues{
-		Teams:        teams,
-		Players:      players,
-		Competitions: competitions,
-	}, nil
+	return md, nil
 }
 
 func (database *HeroBallDatabase) GetGameInfo(gameId int32) (*pb.GameInfo, error) {
