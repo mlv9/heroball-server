@@ -123,3 +123,15 @@ func (hb *HeroBall) GetTeamInfo(context context.Context, request *pb.GetTeamInfo
 
 	return info, nil
 }
+
+func (hb *HeroBall) GetGamesFilterValues(context context.Context, request *pb.GetGamesFilterValuesRequest) (*pb.GamesFilterValues, error) {
+
+	values, err := hb.db.GetGamesFilterValues()
+
+	if err != nil {
+		log.Printf("Error getting games filter values: %v", err)
+		return nil, err
+	}
+
+	return values, nil
+}

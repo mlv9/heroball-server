@@ -170,6 +170,34 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 	return compInfo, nil
 }
 
+func (database *HeroBallDatabase) GetGamesFilterValues() (*pb.GamesFilterValues, error) {
+
+	/* we need competitions, teams, players */
+	competitions, err := database.getAllCompetitions()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting competitions: %v", err)
+	}
+
+	teams, err := database.getAllTeams()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting teams: %v", err)
+	}
+
+	players, err := database.getAllPlayers()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error getting players: %v", err)
+	}
+
+	return &pb.GamesFilterValues{
+		Teams:        teams,
+		Players:      players,
+		Competitions: competitions,
+	}, nil
+}
+
 func (database *HeroBallDatabase) GetGameInfo(gameId int32) (*pb.GameInfo, error) {
 
 	if gameId <= 0 {

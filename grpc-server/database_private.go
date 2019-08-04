@@ -83,7 +83,7 @@ func (database *HeroBallDatabase) getPlayersById(playerIds []int32) ([]*pb.Playe
 		`, pq.Array(playerIds))
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("Unable to find any players")
+		return nil, nil
 	}
 
 	if err != nil {
@@ -446,42 +446,81 @@ func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int
 
 func (database *HeroBallDatabase) getCompetitionById(competitionId int32) (*pb.Competition, error) {
 
-	if competitionId <= 0 {
-		return nil, fmt.Errorf("Invalid competitionId")
+	comps, err := database.getCompetitionsById([]int32{competitionId})
+
+	if err != nil {
+		return nil, err
 	}
 
-	comp := &pb.Competition{
-		League: &pb.League{},
+	if comps == nil || len(comps) == 0 {
+		return nil, fmt.Errorf("Could not find game")
 	}
 
-	err := database.db.QueryRow(`
-		SELECT
-			Competitions.CompetitionId,
-			Leagues.LeagueId,
-			Leagues.Name,
-			Leagues.Division,
-			Competitions.Name
-		FROM
-			Competitions
-		LEFT JOIN
-			Leagues ON Competitions.LeagueId = Leagues.LeagueId
-		WHERE CompetitionId = $1
-	`, competitionId).Scan(
-		&comp.CompetitionId,
-		&comp.League.LeagueId,
-		&comp.League.Name,
-		&comp.League.Division,
-		&comp.Name)
+	if len(comps) != 1 {
+		return nil, fmt.Errorf("Expecting 1 game, got %v", len(comps))
+	}
+
+	return comps[0], nil
+}
+
+func (database *HeroBallDatabase) getCompetitionsById(competitionIds []int32) ([]*pb.Competition, error) {
+
+	if competitionIds == nil {
+		return nil, fmt.Errorf("Invalid competitionIds - must supply at least one")
+	}
+
+	rows, err := database.db.Query(`
+	SELECT
+		Competitions.CompetitionId,
+		Leagues.LeagueId,
+		Leagues.Name,
+		Leagues.Division,
+		Competitions.Name
+	FROM
+		Competitions
+	LEFT JOIN
+		Leagues ON Competitions.LeagueId = Leagues.LeagueId
+	WHERE 
+		CompetitionId = ANY($1)
+	`, pq.Array(competitionIds))
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("CompetitionId does not exist")
+		return nil, nil
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("Error getting comp: %v", err)
+		return nil, fmt.Errorf("Error in db: %v", err)
 	}
 
-	return comp, nil
+	comps := make([]*pb.Competition, 0)
+
+	for rows.Next() {
+
+		comp := &pb.Competition{
+			League: &pb.League{},
+		}
+
+		err = rows.Scan(
+			&comp.CompetitionId,
+			&comp.League.LeagueId,
+			&comp.League.Name,
+			&comp.League.Division,
+			&comp.Name)
+
+		if err != nil {
+			return nil, fmt.Errorf("Error scanning comp: %v", err)
+		}
+
+		comps = append(comps, comp)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("Error on final scan: %v", err)
+	}
+
+	return comps, nil
 }
 
 func (database *HeroBallDatabase) getGameById(gameId int32) (*pb.Game, error) {
@@ -572,7 +611,7 @@ func (database *HeroBallDatabase) getGamesById(gameIds []int32) ([]*pb.Game, err
 		pq.Array(gameIds))
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("That gameId does not exist")
+		return nil, nil
 	}
 
 	if err != nil {
@@ -1059,6 +1098,129 @@ func (database *HeroBallDatabase) getCompetitionTeams(competitionId int32) ([]in
 	return teamIds, nil
 }
 
+func (database *HeroBallDatabase) getAllCompetitions() ([]*pb.Competition, error) {
+
+	/* get all the competitionIds */
+	compIds := make([]int32, 0)
+
+	rows, err := database.db.Query(`
+		SELECT
+			CompetitionId
+		FROM
+			Competitions
+	`)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+
+		var compId int32
+
+		err = rows.Scan(&compId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		compIds = append(compIds, compId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return database.getCompetitionsById(compIds)
+}
+
+func (database *HeroBallDatabase) getAllPlayers() ([]*pb.Player, error) {
+
+	playerIds := make([]int32, 0)
+
+	rows, err := database.db.Query(`
+		SELECT
+			PlayerId
+		FROM
+			Players
+	`)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+
+		var playerId int32
+
+		err = rows.Scan(&playerId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		playerIds = append(playerIds, playerId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return database.getPlayersById(playerIds)
+}
+
+func (database *HeroBallDatabase) getAllTeams() ([]*pb.Team, error) {
+	teamIds := make([]int32, 0)
+
+	rows, err := database.db.Query(`
+		SELECT
+			TeamId
+		FROM
+			Teams
+	`)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+
+		var teamId int32
+
+		err = rows.Scan(&teamId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		teamIds = append(teamIds, teamId)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return database.getTeamsById(teamIds)
+}
+
 func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.PlayerTeam, error) {
 
 	if playerId <= 0 {
@@ -1192,7 +1354,7 @@ func (database *HeroBallDatabase) getTeamsById(teamIds []int32) ([]*pb.Team, err
 	`, pq.Array(teamIds))
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("Teams do not exist")
+		return nil, nil
 	}
 
 	if err != nil {
