@@ -185,7 +185,7 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 	leaders, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		`(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
 		(cardinality($2::int[]) IS NULL OR NOT (PlayerGameStats.TeamId = ANY($2))) AND
-		(cardinality($3::int[]) IS NULL OR (PlayerGameStats.TeamId = ANY($3)) AND
+		(cardinality($3::int[]) IS NULL OR (PlayerGameStats.TeamId = ANY($3))) AND
 		(cardinality($4::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($4))`,
 		[]interface{}{
 			pq.Array(combinedCompIds),
