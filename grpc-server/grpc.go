@@ -135,3 +135,15 @@ func (hb *HeroBall) GetHeroBallMetadata(context context.Context, request *pb.Get
 
 	return values, nil
 }
+
+func (hb *HeroBall) GetStats(context context.Context, request *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+
+	values, err := hb.db.GetStats(request)
+
+	if err != nil {
+		log.Printf("Error getting stats: %v", err)
+		return nil, err
+	}
+
+	return values, nil
+}

@@ -98,14 +98,6 @@ func (database *HeroBallDatabase) GetTeamInfo(teamId int32) (*pb.TeamInfo, error
 
 	teamInfo.Competition = competition
 
-	statLeaders, err := database.getStatsLeadersForTeam(teamId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	teamInfo.StatsLeaders = statLeaders
-
 	return teamInfo, nil
 }
 
@@ -149,14 +141,6 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.Teams = teams
 
-	statLeaders, err := database.getStatsLeadersForCompetition(competitionId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	compInfo.StatsLeaders = statLeaders
-
 	gameCursor, err := database.GetGamesCursor(0, recentGameCount, &pb.GamesFilter{
 		CompetitionIds: []int32{competitionId},
 	})
@@ -168,6 +152,63 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 	compInfo.RecentGames = gameCursor
 
 	return compInfo, nil
+}
+
+func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+
+	/* merge CompetitionIds */
+	combinedCompIds := append(request.For.CompetitionIds, request.Against.CompetitionIds...)
+
+	/* we need to get stats leaders */
+	leaders, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
+		`(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
+		(cardinality($2::int[]) IS NULL OR NOT (PlayerGameStats.TeamId = ANY($2))) AND
+		(cardinality($3::int[]) IS NULL OR (PlayerGameStats.TeamId = ANY($3)) AND
+		(cardinality($4::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($4))`,
+		[]interface{}{
+			pq.Array(combinedCompIds),
+			pq.Array(request.Against.TeamIds),
+			pq.Array(request.For.TeamIds),
+			pq.Array(request.For.PlayerIds)},
+		"GROUP BY PlayerGameStats.PlayerId",
+		"PlayerGameStats.PlayerId",
+		"HAVING COUNT(PlayerGameStats.StatsId) >= $5",
+		[]interface{}{request.MinimumGames},
+		`ORDER BY 
+			(COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
+			COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
+			COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0))
+		DESC`, request.GetCount(), request.GetOffset())
+
+	if err != nil {
+		return nil, err
+	}
+
+	players, err := database.getPlayersById(playerIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	playerMap := make(map[int32]*pb.Player)
+
+	/* into map */
+	for _, p := range players {
+		playerMap[p.PlayerId] = p
+	}
+
+	playerStats := make([]*pb.PlayerAggregateStats, 0)
+
+	for i, playerStatLine := range leaders {
+		playerStats = append(playerStats, &pb.PlayerAggregateStats{
+			Player:     playerMap[playerIds[i]],
+			TotalStats: playerStatLine,
+		})
+	}
+
+	return &pb.GetStatsResponse{
+		Stats: playerStats,
+	}, nil
 }
 
 func (database *HeroBallDatabase) GetHeroBallMetadata(request *pb.GetHeroBallMetadataRequest) (*pb.HeroBallMetadata, error) {

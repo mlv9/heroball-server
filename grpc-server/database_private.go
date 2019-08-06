@@ -148,16 +148,25 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForTeam(playerId int32, tea
 		return nil, fmt.Errorf("Invalid playerId")
 	}
 
-	playerStats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
+	playerStats, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		"PlayerGameStats.PlayerId = $1 AND PlayerGameStats.TeamId = $2",
 		[]interface{}{playerId, teamId},
-		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "")
+		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "", 1, 1)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return playerStats, nil
+	if playerStats == nil || len(playerStats) < 1 || len(playerIds) < 1 {
+		return nil, nil
+	}
+
+	player, err := database.getPlayerById(playerIds[0])
+
+	return &pb.PlayerAggregateStats{
+		TotalStats: playerStats[0],
+		Player:     player,
+	}, nil
 }
 
 func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) (*pb.PlayerAggregateStats, error) {
@@ -166,16 +175,25 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) 
 		return nil, fmt.Errorf("Invalid playerId")
 	}
 
-	playerStats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
+	playerStats, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		"PlayerGameStats.PlayerId = $1",
 		[]interface{}{playerId},
-		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "")
+		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "", 1, 1)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return playerStats, nil
+	if playerStats == nil || len(playerStats) < 1 || len(playerIds) < 1 {
+		return nil, nil
+	}
+
+	player, err := database.getPlayerById(playerIds[0])
+
+	return &pb.PlayerAggregateStats{
+		TotalStats: playerStats[0],
+		Player:     player,
+	}, nil
 }
 
 func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions string, args []interface{}) ([]*pb.PlayerGameStats, error) {
@@ -280,21 +298,19 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 	return joinedStats, nil
 }
 
-func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrder(whereClause string, whereArgs []interface{}, grouping string, groupReturnedKey string, having string, havingArgs []interface{}, ordering string) (*pb.PlayerAggregateStats, int32, error) {
-
-	/* append to totals */
-	aggregateStats := &pb.PlayerAggregateStats{
-		TotalStats: &pb.Stats{},
-	}
+func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(whereClause string, whereArgs []interface{}, grouping string, groupReturnedKey string, having string, havingArgs []interface{}, ordering string, limit int32, offset int32) ([]*pb.Stats, []int32, error) {
 
 	/* if missing, lets fake it */
 	if groupReturnedKey == "" {
-		groupReturnedKey = "0,"
+		groupReturnedKey = "0"
 	}
 
-	var groupedKey int32
+	groupedKeys := make([]int32, 0)
 
-	err := database.db.QueryRow(fmt.Sprintf(`
+	/* append to totals */
+	allStats := make([]*pb.Stats, 0)
+
+	rows, err := database.db.Query(fmt.Sprintf(`
 		SELECT
 			%v,
 			COUNT(PlayerGameStats.StatsId),
@@ -320,38 +336,61 @@ func (database *HeroBallDatabase) getAggregateStatsByConditionAndGroupingAndOrde
 			Games ON PlayerGameStats.GameId = Games.GameId	
 		WHERE
 			%v
-		%v
-		%v
-		%v`,
-		groupReturnedKey, whereClause, grouping, having, ordering), append(whereArgs, havingArgs...)...).Scan(
-		&groupedKey,
-		&aggregateStats.Count,
-		&aggregateStats.TotalStats.TwoPointFGA,
-		&aggregateStats.TotalStats.TwoPointFGM,
-		&aggregateStats.TotalStats.ThreePointFGA,
-		&aggregateStats.TotalStats.ThreePointFGM,
-		&aggregateStats.TotalStats.FreeThrowsAttempted,
-		&aggregateStats.TotalStats.FreeThrowsMade,
-		&aggregateStats.TotalStats.OffensiveRebounds,
-		&aggregateStats.TotalStats.DefensiveRebounds,
-		&aggregateStats.TotalStats.Assists,
-		&aggregateStats.TotalStats.Blocks,
-		&aggregateStats.TotalStats.Steals,
-		&aggregateStats.TotalStats.Turnovers,
-		&aggregateStats.TotalStats.RegularFoulsForced,
-		&aggregateStats.TotalStats.RegularFoulsCommitted,
-		&aggregateStats.TotalStats.TechnicalFoulsCommitted,
-		&aggregateStats.TotalStats.MinutesPlayed)
+			%v
+			%v
+			%v
+			LIMIT %v
+			OFFSET %v`,
+		groupReturnedKey, whereClause, grouping, having, ordering, limit, offset), append(whereArgs, havingArgs...)...)
 
 	if err == sql.ErrNoRows {
-		return nil, 0, nil
+		return nil, nil, nil
 	}
 
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, err
 	}
 
-	return aggregateStats, groupedKey, nil
+	for rows.Next() {
+
+		stats := &pb.Stats{}
+
+		var groupedKey int32
+
+		err = rows.Scan(&groupedKey,
+			&stats.GameCount,
+			&stats.TwoPointFGA,
+			&stats.TwoPointFGM,
+			&stats.ThreePointFGA,
+			&stats.ThreePointFGM,
+			&stats.FreeThrowsAttempted,
+			&stats.FreeThrowsMade,
+			&stats.OffensiveRebounds,
+			&stats.DefensiveRebounds,
+			&stats.Assists,
+			&stats.Blocks,
+			&stats.Steals,
+			&stats.Turnovers,
+			&stats.RegularFoulsForced,
+			&stats.RegularFoulsCommitted,
+			&stats.TechnicalFoulsCommitted,
+			&stats.MinutesPlayed)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		allStats = append(allStats, stats)
+		groupedKeys = append(groupedKeys, groupedKey)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return allStats, groupedKeys, nil
 }
 
 func (database *HeroBallDatabase) getResultForGame(gameId int32) (*pb.GameResult, error) {
@@ -427,21 +466,29 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 		results = append(results, &pb.GameResult{
 			HomeTeamId:     homeTeamId,
 			AwayTeamId:     awayTeamId,
-			HomeTeamPoints: (homeTeamStats.TotalStats.ThreePointFGM * 3) + (homeTeamStats.TotalStats.TwoPointFGM * 2) + (homeTeamStats.TotalStats.FreeThrowsMade),
-			AwayTeamPoints: (awayTeamStats.TotalStats.ThreePointFGM * 3) + (awayTeamStats.TotalStats.TwoPointFGM * 2) + (awayTeamStats.TotalStats.FreeThrowsMade),
+			HomeTeamPoints: (homeTeamStats.ThreePointFGM * 3) + (homeTeamStats.TwoPointFGM * 2) + (homeTeamStats.FreeThrowsMade),
+			AwayTeamPoints: (awayTeamStats.ThreePointFGM * 3) + (awayTeamStats.TwoPointFGM * 2) + (awayTeamStats.FreeThrowsMade),
 		})
 	}
 
 	return results, nil
 }
 
-func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int32) (*pb.PlayerAggregateStats, error) {
-	stats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
+func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int32) (*pb.Stats, error) {
+	stats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		"PlayerGameStats.TeamId = $1 AND PlayerGameStats.GameId = $2",
 		[]interface{}{teamId, gameId},
-		"GROUP BY PlayerGameStats.TeamId", "PlayerGameStats.TeamId", "", nil, "")
+		"GROUP BY PlayerGameStats.TeamId", "PlayerGameStats.TeamId", "", nil, "", 1, 1)
 
-	return stats, err
+	if err != nil {
+		return nil, err
+	}
+
+	if stats == nil || len(stats) < 1 {
+		return nil, nil
+	}
+
+	return stats[0], nil
 }
 
 func (database *HeroBallDatabase) getCompetitionById(competitionId int32) (*pb.Competition, error) {
@@ -1647,84 +1694,34 @@ func (database *HeroBallDatabase) getCompetitionForTeam(teamId int32) (int32, er
 	return competitionId, nil
 }
 
-func (database *HeroBallDatabase) getStatsLeadersForTeam(teamId int32) (*pb.BasicStatsLeaders, error) {
+// func (database *HeroBallDatabase) getStatsLeadersForTeam(teamId int32) (*pb.BasicStatsLeaders, error) {
 
-	competitionId, err := database.getCompetitionForTeam(teamId)
+// 	competitionId, err := database.getCompetitionForTeam(teamId)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	teamGameCount, err := database.getTeamGameCount(teamId)
+// 	teamGameCount, err := database.getTeamGameCount(teamId)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	requiredGameCount := int32(math.Ceil(float64(teamGameCount) / 3))
+// 	requiredGameCount := int32(math.Ceil(float64(teamGameCount) / 3))
 
-	return database.getStatsLeaders(competitionId, requiredGameCount, "PlayerGameStats.TeamId = $1", []interface{}{teamId})
-}
+// 	return database.getStatsLeaders(competitionId, requiredGameCount, "PlayerGameStats.TeamId = $1", []interface{}{teamId})
+// }
 
-func (database *HeroBallDatabase) getStatsLeadersForCompetition(competitionId int32) (*pb.BasicStatsLeaders, error) {
+// func (database *HeroBallDatabase) getStatsLeadersForCompetition(competitionId int32) (*pb.BasicStatsLeaders, error) {
 
-	roundsInComp, err := database.getCompetitionRoundCount(competitionId)
+// 	roundsInComp, err := database.getCompetitionRoundCount(competitionId)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	requiredGameCount := int32(math.Ceil(float64(roundsInComp) / 3))
+// 	requiredGameCount := int32(math.Ceil(float64(roundsInComp) / 3))
 
-	return database.getStatsLeaders(competitionId, requiredGameCount, "Games.CompetitionId = $1", []interface{}{competitionId})
-}
-
-func (database *HeroBallDatabase) getStatsLeaders(competitionId int32, requiredGameCount int32, whereClause string, whereArgs []interface{}) (*pb.BasicStatsLeaders, error) {
-
-	statLeaders := &pb.BasicStatsLeaders{}
-
-	pointsLeader, playerId, err := database.getAggregateStatsByConditionAndGroupingAndOrder(
-		whereClause,
-		whereArgs,
-		"GROUP BY PlayerGameStats.PlayerId",
-		"PlayerGameStats.PlayerId",
-		"HAVING COUNT(PlayerGameStats.StatsId) >= $2",
-		[]interface{}{requiredGameCount},
-		`ORDER BY 
-			(COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
-			COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
-			COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0))
-		DESC`)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if pointsLeader != nil {
-		player, err := database.getPlayerById(playerId)
-
-		if err != nil {
-			return nil, err
-		}
-
-		pointsLeader.Player = player
-
-		teamId, err := database.getPlayersTeamInCompetition(playerId, competitionId)
-
-		if err != nil {
-			return nil, err
-		}
-
-		team, err := database.getTeamById(teamId)
-
-		if err != nil {
-			return nil, err
-		}
-
-		pointsLeader.Team = team
-
-		statLeaders.Points = []*pb.PlayerAggregateStats{pointsLeader}
-	}
-
-	return statLeaders, nil
-}
+// 	return database.getStatsLeaders(competitionId, requiredGameCount, "Games.CompetitionId = $1", []interface{}{competitionId})
+// }
