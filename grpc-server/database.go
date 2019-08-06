@@ -160,7 +160,26 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 
 	log.Printf("Got Stats Request: %+v", request)
 
-	combinedCompIds := append(request.For.CompetitionIds, request.Against.CompetitionIds...)
+	forRequest := &pb.ForStatsRequest{
+		CompetitionIds: make([]int32, 0),
+		TeamIds:        make([]int32, 0),
+		PlayerIds:      make([]int32, 0),
+	}
+
+	againstRequest := &pb.AgainstStatsRequest{
+		CompetitionIds: make([]int32, 0),
+		TeamIds:        make([]int32, 0),
+	}
+
+	if request.For != nil {
+		forRequest = request.GetFor()
+	}
+
+	if request.Against == nil {
+		againstRequest = request.GetAgainst()
+	}
+
+	combinedCompIds := append(forRequest.CompetitionIds, forRequest.CompetitionIds...)
 
 	/* we need to get stats leaders */
 	leaders, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
@@ -170,9 +189,9 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		(cardinality($4::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($4))`,
 		[]interface{}{
 			pq.Array(combinedCompIds),
-			pq.Array(request.Against.TeamIds),
-			pq.Array(request.For.TeamIds),
-			pq.Array(request.For.PlayerIds)},
+			pq.Array(againstRequest.TeamIds),
+			pq.Array(forRequest.TeamIds),
+			pq.Array(forRequest.PlayerIds)},
 		"GROUP BY PlayerGameStats.PlayerId",
 		"PlayerGameStats.PlayerId",
 		"HAVING COUNT(PlayerGameStats.StatsId) >= $5",
