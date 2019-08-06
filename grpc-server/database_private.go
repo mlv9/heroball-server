@@ -151,7 +151,7 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForTeam(playerId int32, tea
 	playerStats, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		"PlayerGameStats.PlayerId = $1 AND PlayerGameStats.TeamId = $2",
 		[]interface{}{playerId, teamId},
-		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "", 1, 1)
+		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "", 1, 0)
 
 	if err != nil {
 		return nil, err
@@ -178,7 +178,7 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) 
 	playerStats, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		"PlayerGameStats.PlayerId = $1",
 		[]interface{}{playerId},
-		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "", 1, 1)
+		"GROUP BY PlayerGameStats.PlayerId", "PlayerGameStats.PlayerId", "", nil, "", 1, 0)
 
 	if err != nil {
 		return nil, err
@@ -450,7 +450,7 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 		}
 
 		if homeTeamStats == nil {
-			return nil, fmt.Errorf("Was not able to find teamId %v stats for gameId %v", homeTeamId, gameId)
+			return nil, fmt.Errorf("Was not able to find home teamId %v stats for gameId %v", homeTeamId, gameId)
 		}
 
 		awayTeamStats, err := database.getStatsForTeamInGame(awayTeamId, gameId)
@@ -460,7 +460,7 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 		}
 
 		if awayTeamStats == nil {
-			return nil, fmt.Errorf("Was not able to find teamId %v stats for gameId %v", awayTeamId, gameId)
+			return nil, fmt.Errorf("Was not able to find away teamId %v stats for gameId %v", awayTeamId, gameId)
 		}
 
 		results = append(results, &pb.GameResult{
@@ -478,7 +478,7 @@ func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int
 	stats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		"PlayerGameStats.TeamId = $1 AND PlayerGameStats.GameId = $2",
 		[]interface{}{teamId, gameId},
-		"GROUP BY PlayerGameStats.TeamId", "PlayerGameStats.TeamId", "", nil, "", 1, 1)
+		"GROUP BY PlayerGameStats.TeamId", "PlayerGameStats.TeamId", "", nil, "", 1, 0)
 
 	if err != nil {
 		return nil, err
