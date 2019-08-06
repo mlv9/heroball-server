@@ -206,6 +206,10 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		return nil, err
 	}
 
+	if len(playerIds) < 1 {
+		return nil, nil
+	}
+
 	players, err := database.getPlayersById(playerIds)
 
 	if err != nil {
