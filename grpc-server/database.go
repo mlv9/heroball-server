@@ -193,9 +193,9 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		"HAVING COUNT(PlayerGameStats.StatsId) >= $5",
 		[]interface{}{request.MinimumGames},
 		`ORDER BY 
-			(COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
+			((COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
 			COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
-			COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0))
+			COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)) / COUNT(PlayerGameStats.StatsId))
 		DESC`, request.GetCount(), request.GetOffset())
 
 	if err != nil {
