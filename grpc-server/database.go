@@ -175,6 +175,8 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		againstRequest = request.GetAgainst()
 	}
 
+	log.Printf("Got a stats request: for %+v, against: %+v", forRequest, againstRequest)
+
 	combinedCompIds := append(forRequest.CompetitionIds, forRequest.CompetitionIds...)
 
 	/* we need to get stats leaders */
