@@ -167,11 +167,11 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		TeamIds:        make([]int32, 0),
 	}
 
-	if request.For != nil {
+	if request.GetFor() != nil {
 		forRequest = request.GetFor()
 	}
 
-	if request.Against == nil {
+	if request.GetAgainst() != nil {
 		againstRequest = request.GetAgainst()
 	}
 
