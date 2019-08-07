@@ -223,13 +223,13 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 
 	for i, playerStatLine := range leaders {
 		playerStats = append(playerStats, &pb.PlayerAggregateStats{
-			Player:     playerMap[playerIds[i]],
-			TotalStats: playerStatLine,
+			Player: playerMap[playerIds[i]],
+			Stats:  playerStatLine,
 		})
 	}
 
 	return &pb.GetStatsResponse{
-		Stats: playerStats,
+		AggregateStats: playerStats,
 	}, nil
 }
 
@@ -344,7 +344,7 @@ func (database *HeroBallDatabase) GetPlayerInfo(playerId int32) (*pb.PlayerInfo,
 		return nil, fmt.Errorf("Error getting all stats for player: %v", err)
 	}
 
-	info.StatsAllTime = totalStats
+	info.AggregateStats = totalStats
 
 	gameCursor, err := database.GetGamesCursor(0, recentGameCount, &pb.GamesFilter{
 		PlayerIds: []int32{playerId},

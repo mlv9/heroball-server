@@ -164,8 +164,8 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForTeam(playerId int32, tea
 	player, err := database.getPlayerById(playerIds[0])
 
 	return &pb.PlayerAggregateStats{
-		TotalStats: playerStats[0],
-		Player:     player,
+		Stats:  playerStats[0],
+		Player: player,
 	}, nil
 }
 
@@ -191,8 +191,8 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) 
 	player, err := database.getPlayerById(playerIds[0])
 
 	return &pb.PlayerAggregateStats{
-		TotalStats: playerStats[0],
-		Player:     player,
+		Stats:  playerStats[0],
+		Player: player,
 	}, nil
 }
 
@@ -1330,7 +1330,7 @@ func (database *HeroBallDatabase) getAllTeamsForPlayer(playerId int32) ([]*pb.Pl
 			return nil, err
 		}
 
-		playerTeam.Stats = playerStats
+		playerTeam.AggregateStats = playerStats
 
 		teams = append(teams, playerTeam)
 	}
