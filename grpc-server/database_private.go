@@ -769,7 +769,7 @@ func (database *HeroBallDatabase) getPlayersForTeam(teamId int32) ([]int32, erro
 }
 
 /* returns a list of gameIds, from most recent to least recent */
-func (database *HeroBallDatabase) getGameIdsForCompetition(competitionId int32) ([]int32, error) {
+func (database *HeroBallDatabase) getGameIdsForCompetitionId(competitionId int32) ([]int32, error) {
 
 	if competitionId <= 0 {
 		return nil, fmt.Errorf("Invalid competitionId")
@@ -1567,7 +1567,7 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 
 func (database *HeroBallDatabase) getResultsForCompetition(competitionId int32) ([]*pb.GameResult, error) {
 
-	gameIds, err := database.getGameIdsForCompetition(competitionId)
+	gameIds, err := database.getGameIdsForCompetitionId(competitionId)
 
 	if err != nil {
 		return nil, err
