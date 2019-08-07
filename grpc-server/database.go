@@ -151,14 +151,7 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.RecentGames = gameCursor
 
-	/* get total games count */
-	gamesIds, err := database.getGameIdsForCompetitionId(competitionId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	compInfo.GamesPlayed = int32(len(gamesIds))
+	// firstgame, lastgame, err := database.getFirstAndLastGameForCompetitionId(competitionId)
 
 	return compInfo, nil
 }
