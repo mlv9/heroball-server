@@ -1060,7 +1060,7 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 		SELECT 
 			GameTime 
 		FROM
-		(SELECT
+		((SELECT
 			GameTime
 		FROM 
 			Games
@@ -1080,7 +1080,7 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 		ORDER BY
 			GameTime
 		DESC
-		LIMIT 1)
+		LIMIT 1)) As GameTimes
 	`, competitionId).Scan(&firstGameTime, &lastGameTime)
 
 	if err == sql.ErrNoRows {
