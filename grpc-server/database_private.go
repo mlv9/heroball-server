@@ -1062,7 +1062,7 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 		FROM 
 			Games
 		WHERE 
-			CompetitionId = 1
+			CompetitionId = $1
 		ORDER BY
 			GameTime
 		ASC
@@ -1073,7 +1073,7 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 		FROM 
 			Games
 		WHERE 
-			CompetitionId = 1
+			CompetitionId = $1
 		ORDER BY
 			GameTime
 		DESC
