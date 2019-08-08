@@ -1056,11 +1056,8 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 	var firstGameTime string
 	var lastGameTime string
 
-	err := database.db.QueryRow(`
-		SELECT 
-			GameTime 
-		FROM
-		((SELECT
+	rows, err := database.db.Query(`
+		(SELECT
 			GameTime
 		FROM 
 			Games
@@ -1080,12 +1077,42 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 		ORDER BY
 			GameTime
 		DESC
-		LIMIT 1)) As GameTimes
-	`, competitionId).Scan(&firstGameTime, &lastGameTime)
+		LIMIT 1)
+	`, competitionId)
 
 	if err == sql.ErrNoRows {
 		return "", "", nil
 	}
+
+	if err != nil {
+		return "", "", err
+	}
+
+	foundFirstGame := rows.Next()
+
+	if !foundFirstGame {
+		return "", "", err
+	}
+
+	err = rows.Scan(&firstGameTime)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	foundLastGame := rows.Next()
+
+	if !foundLastGame {
+		lastGameTime = firstGameTime
+	} else {
+		err = rows.Scan(&lastGameTime)
+
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	err = rows.Err()
 
 	if err != nil {
 		return "", "", err
