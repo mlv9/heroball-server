@@ -157,8 +157,8 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 		return nil, err
 	}
 
-	compInfo.FirstGameDate = firstGame
-	compInfo.LastGameDate = lastGame
+	compInfo.FirstGameTime = firstGame
+	compInfo.LastGameTime = lastGame
 
 	return compInfo, nil
 }
