@@ -1057,6 +1057,9 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 	var lastGameTime string
 
 	err := database.db.QueryRow(`
+		SELECT 
+			GameTime 
+		FROM
 		(SELECT
 			GameTime
 		FROM 
