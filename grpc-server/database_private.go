@@ -1047,6 +1047,50 @@ func (database *HeroBallDatabase) getPlayersTeamInCompetition(playerId int32, co
 	return team.TeamId, nil
 }
 
+func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitionId int32) (string, string, error) {
+
+	if competitionId <= 0 {
+		return "", "", fmt.Errorf("Invalid competitionId")
+	}
+
+	var firstGameTime string
+	var lastGameTime string
+
+	err := database.db.QueryRow(`
+		(SELECT
+			GameTime
+		FROM 
+			Games
+		WHERE 
+			CompetitionId = 1
+		ORDER BY
+			GameTime
+		ASC
+		LIMIT 1)
+		UNION ALL
+		(SELECT
+			GameTime
+		FROM 
+			Games
+		WHERE 
+			CompetitionId = 1
+		ORDER BY
+			GameTime
+		DESC
+		LIMIT 1)
+	`, competitionId).Scan(&firstGameTime, &lastGameTime)
+
+	if err == sql.ErrNoRows {
+		return "", "", nil
+	}
+
+	if err != nil {
+		return "", "", err
+	}
+
+	return firstGameTime, lastGameTime, nil
+}
+
 func (database *HeroBallDatabase) getCompetitionLocations(competitionId int32) ([]int32, error) {
 
 	if competitionId <= 0 {
