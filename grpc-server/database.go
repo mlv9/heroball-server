@@ -184,7 +184,73 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		againstRequest = request.GetAgainst()
 	}
 
-	log.Printf("Got a stats request: for %+v, against: %+v", forRequest, againstRequest)
+	ordering := ""
+
+	/* lets take care of the ordering */
+	switch request.GetOrdering() {
+	case "":
+	case "PPG":
+		ordering = `
+			ORDER BY 
+				((COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
+				COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
+				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)) / COUNT(PlayerGameStats.StatsId))
+			DESC`
+		break
+	case "RPG":
+		ordering = `
+			ORDER BY 
+				(COALESCE(SUM(PlayerGameStats.OffensiveRebounds), 0) + 
+				COALESCE(SUM(PlayerGameStats.DefensiveRebounds, 0)) / COUNT(PlayerGameStats.StatsId))
+			DESC`
+		break
+	case "APG":
+		ordering = `
+			ORDER BY
+				COALESCE(SUM(PlayerGameStats.Assists), 0) / COUNT(PlayerGameStats.StatsId)
+			DESC`
+		break
+	case "BPG":
+		ordering = `
+			ORDER BY
+				COALESCE(SUM(PlayerGameStats.Blocks), 0) / COUNT(PlayerGameStats.StatsId)
+			DESC`
+		break
+	case "SPG":
+		ordering = `
+			ORDER BY
+				COALESCE(SUM(PlayerGameStats.Steals), 0) / COUNT(PlayerGameStats.StatsId)
+			DESC`
+		break
+	case "2PFG":
+		ordering = `
+			ORDER BY
+				COALESCE(SUM(PlayerGameStats.TwoPointFGM), 0) / COALESCE(SUM(PlayerGameStats.TwoPointFGA), 0)
+			DESC`
+		break
+	case "3PFG":
+		ordering = `
+			ORDER BY
+			COALESCE(SUM(PlayerGameStats.ThreePointFGM), 0) / COALESCE(SUM(PlayerGameStats.ThreePointFGA), 0)
+			DESC`
+		break
+	case "MPG":
+		ordering = `
+			ORDER BY
+				COALESCE(SUM(PlayerGameStats.Minutes), 0) / COUNT(PlayerGameStats.StatsId)
+			DESC`
+		break
+	case "FT":
+		ordering = `
+			ORDER BY
+				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0) / COALESCE(SUM(PlayerGameStats.FreeThrowsAttempted), 0)
+			DESC`
+		break
+	default:
+		return nil, fmt.Errorf("Unrecognised ordering: %v", request.GetOrdering())
+	}
+
+	log.Printf("Got a stats request: for %+v, against: %+v, ordering %v", forRequest, againstRequest, request.GetOrdering())
 
 	combinedCompIds := append(forRequest.CompetitionIds, forRequest.CompetitionIds...)
 
@@ -203,11 +269,9 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		"PlayerGameStats.PlayerId",
 		"HAVING COUNT(PlayerGameStats.StatsId) >= $5",
 		[]interface{}{request.MinimumGames},
-		`ORDER BY 
-			((COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
-			COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
-			COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)) / COUNT(PlayerGameStats.StatsId))
-		DESC`, request.GetCount(), request.GetOffset())
+		ordering,
+		request.GetCount(),
+		request.GetOffset())
 
 	if err != nil {
 		return nil, err
