@@ -192,9 +192,9 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 	case "PPG":
 		ordering = `
 			ORDER BY 
-				((COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
+				(((COALESCE(SUM(PlayerGameStats.ThreePointFGM)*3, 0) + 
 				COALESCE(SUM(PlayerGameStats.TwoPointFGM)*2, 0) + 
-				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)) / COUNT(PlayerGameStats.StatsId)) AS FLOAT
+				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)) / COUNT(PlayerGameStats.StatsId)) AS FLOAT)
 			DESC`
 		break
 	case "RPG":
