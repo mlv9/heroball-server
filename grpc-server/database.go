@@ -240,6 +240,12 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 				COALESCE(SUM(PlayerGameStats.MinutesPlayed), 0)::float / COUNT(PlayerGameStats.StatsId)::float
 			DESC`
 		break
+	case "TPG":
+		ordering = `
+			ORDER BY
+				COALESCE(SUM(PlayerGameStats.Turnovers), 0)::float / COUNT(PlayerGameStats.StatsId)::float
+			DESC`
+		break
 	case "FT":
 		ordering = `
 			ORDER BY
