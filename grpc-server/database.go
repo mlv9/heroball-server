@@ -200,50 +200,50 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 	case "RPG":
 		ordering = `
 			ORDER BY 
-				(COALESCE(SUM(PlayerGameStats.OffensiveRebounds), 0) + 
-				COALESCE(SUM(PlayerGameStats.DefensiveRebounds), 0)) / COUNT(PlayerGameStats.StatsId)
+				(COALESCE(SUM(PlayerGameStats.OffensiveRebounds), 0)::float + 
+				COALESCE(SUM(PlayerGameStats.DefensiveRebounds), 0))::float / COUNT(PlayerGameStats.StatsId)::float
 			DESC`
 		break
 	case "APG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.Assists), 0) / COUNT(PlayerGameStats.StatsId)
+				COALESCE(SUM(PlayerGameStats.Assists), 0)::float / COUNT(PlayerGameStats.StatsId)::float
 			DESC`
 		break
 	case "BPG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.Blocks), 0) / COUNT(PlayerGameStats.StatsId)
+				COALESCE(SUM(PlayerGameStats.Blocks), 0)::float / COUNT(PlayerGameStats.StatsId)::float
 			DESC`
 		break
 	case "SPG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.Steals), 0) / COUNT(PlayerGameStats.StatsId)
+				COALESCE(SUM(PlayerGameStats.Steals), 0)::float / COUNT(PlayerGameStats.StatsId)::float
 			DESC`
 		break
 	case "2PFG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.TwoPointFGM), 0) / COALESCE(SUM(PlayerGameStats.TwoPointFGA), 0)
+				COALESCE(SUM(PlayerGameStats.TwoPointFGM), 0)::float / COALESCE(SUM(PlayerGameStats.TwoPointFGA), 0)::float
 			DESC`
 		break
 	case "3PFG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.ThreePointFGM), 0) / COALESCE(SUM(PlayerGameStats.ThreePointFGA), 0)
+				COALESCE(SUM(PlayerGameStats.ThreePointFGM), 0)::float / COALESCE(SUM(PlayerGameStats.ThreePointFGA), 0)::float
 			DESC`
 		break
 	case "MPG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.MinutesPlayed), 0) / COUNT(PlayerGameStats.StatsId)
+				COALESCE(SUM(PlayerGameStats.MinutesPlayed), 0)::float / COUNT(PlayerGameStats.StatsId)::float
 			DESC`
 		break
 	case "FT":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0) / COALESCE(SUM(PlayerGameStats.FreeThrowsAttempted), 0)
+				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)::float / COALESCE(SUM(PlayerGameStats.FreeThrowsAttempted), 0)::float
 			DESC`
 		break
 	default:
@@ -301,7 +301,6 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 			Player: playerMap[playerIds[i]],
 			Stats:  playerStatLine,
 		})
-		log.Printf("Adding playerId %v with stats %+v", playerIds[i], playerStatLine)
 	}
 
 	return &pb.GetStatsResponse{
