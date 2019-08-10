@@ -254,7 +254,9 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 		stats := &pb.PlayerGameStats{
 			Team:   &pb.Team{},
 			Player: &pb.Player{},
-			Stats:  &pb.Stats{},
+			Stats: &pb.Stats{
+				GameCount: 1,
+			},
 		}
 
 		err = rows.Scan(
