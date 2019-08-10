@@ -301,6 +301,7 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 			Player: playerMap[playerIds[i]],
 			Stats:  playerStatLine,
 		})
+		log.Printf("Adding playerId %v with stats %+v", playerIds[i], playerStatLine)
 	}
 
 	return &pb.GetStatsResponse{
