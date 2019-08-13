@@ -140,20 +140,20 @@ def initTeamsAndPlayers():
                                   port = "5432",
                                   database = "postgres")
         with connection.cursor() as cursor:
-        	insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
+            insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
 
-        	for team in teams:
-        	    cursor.execute(insert_team_query, (team["Name"]))
+            for team in teams:
+                cursor.execute(insert_team_query, (team["Name"]))
 
-      	  	insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
+      	    insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
 
-      	  	for player in players:
-      	      		cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
+      	    for player in players:
+      	            cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
 
-       		expected_insert_count = len(players) + len(teams)
+       	    expected_insert_count = len(players) + len(teams)
 
-        	if cursor.rowcount != expected_insert_count:
-            		raise Exception("Expected " , expected_insert_count , " inserts, got " , cursor.rowcount)
+            if cursor.rowcount != expected_insert_count:
+                    raise Exception("Expected " , expected_insert_count , " inserts, got " , cursor.rowcount)
 
     except Exception as error:
         if(connection):
