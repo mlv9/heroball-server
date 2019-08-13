@@ -142,9 +142,11 @@ def initTeamsAndPlayers():
         print(connection)
         with connection.cursor() as cursor:
             print(cursor)
+            print(teams)
             insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
 
             for team in teams:
+                print(team)
                 cursor.execute(insert_team_query, (team["Name"]))
 
             insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
