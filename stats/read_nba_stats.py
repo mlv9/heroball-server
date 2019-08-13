@@ -147,7 +147,7 @@ def initTeamsAndPlayers():
 
             insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
 
-      	    for player in players:
+            for player in players:
       	            cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
 
        	    expected_insert_count = len(players) + len(teams)
