@@ -166,9 +166,9 @@ for line in statLines:
     if len(lineArr) < 2:
         continue
 
-    homeTeam = getHomeTeam(line)
-    awayTeam = getAwayTeam(line)
-    gameTime = getGameDateTime(line)
+    homeTeam = getHomeTeam(lineArr)
+    awayTeam = getAwayTeam(lineArr)
+    gameTime = getGameDateTime(lineArr)
 
     gameKey = homeTeam + awayTeam + str(gameTime)
 
