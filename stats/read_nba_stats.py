@@ -85,7 +85,7 @@ def getBLK(statLine):
     return int(statLine[headingsIndex["playBLK"]])
 
 def getMIN(statLine):
-    return int(statLine[headingsIndex["playMIN"]])
+    return int(statLine[headingsIndex["playMin"]])
 
 def getPFC(statLine):
     count = int(statLine[headingsIndex["playPF"]])
