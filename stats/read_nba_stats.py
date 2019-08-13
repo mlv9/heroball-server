@@ -179,8 +179,10 @@ with connection.cursor() as cursor:
 
     for game in games:
         #do insert into the DB
-        homeTeamId = cursor.execute("SELECT TeamId FROM Teams WHERE TeamId = %s;" (games[game]["HomeTeam"],)).fetchone()[0]
-        awayTeamId = cursor.execute("SELECT TeamId FROM Teams WHERE TeamId = %s;" (games[game]["AwayTeam"],)).fetchone()[0]
+        cursor.execute("SELECT TeamId FROM Teams WHERE TeamId = %s;" (games[game]["HomeTeam"],))
+        homeTeamId = cursor.fetchone()[0]
+        cursor.execute("SELECT TeamId FROM Teams WHERE TeamId = %s;" (games[game]["AwayTeam"],))
+        awayTeamId = cursor.fetchone()[0]
 
         cursor.execute("INSERT INTO Games (CompetitionId, LocationId, HomeTeamId, AwayTeamId, GameTime) VALUES (%s, %s, %s, %s, %s)", (1, 1, homeTeamId, awayTeamId, games[game]["GameTime"]))
         connection.commit()
