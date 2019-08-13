@@ -72,9 +72,6 @@ def get3PFGM(statLine):
 def get3PFGA(statLine):
     return statLine[headingsIndex["play3PA"]]
 
-def get2PFGM(statLine):
-    return statLine[headingsIndex["play3PM"]]
-
 def getFTA(statLine):
     return statLine[headingsIndex["playFTA"]]
 
