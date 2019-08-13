@@ -52,10 +52,10 @@ def getAST(statLine):
     return statLine[headingsIndex["playAST"]]
 
 def getTO(statLine):
-    return statLine[headingsIndex["playTO"]])
+    return statLine[headingsIndex["playTO"]]
 
 def getOREB(statLine):
-    return statLine[headingsIndex["playORB"]])
+    return statLine[headingsIndex["playORB"]]
 
 def getDREB(statLine):
     return statLine[headingsIndex["playDRB"]]
@@ -227,21 +227,21 @@ with connection.cursor() as cursor:
             MinutesPlayed)
             VALUES 
                 (
-                    (SELECT PlayerId FROM Players WHERE Name = %s), 
+                    (SELECT PlayerId FROM Players WHERE Name = %s LIMIT 1), 
                     (SELECT 
                         GameId 
                     FROM 
                         Games 
                     WHERE 
-                        AwayTeamId = (SELECT TeamId FROM Teams WHERE Name = %s) AND 
-                        HomeTeamId = (SELECT TeamId FROM Teams WHERE Name = %s) AND 
-                        GameTime = %s),
-                    (SELECT TeamId FROM Teams WHERE Name = %s),
-                    0,
+                        HomeTeamId = (SELECT TeamId FROM Teams WHERE Name = %s LIMIT 1) AND 
+                        AwayTeamId = (SELECT TeamId FROM Teams WHERE Name = %s LIMIT 1) AND 
+                        GameTime = %s LIMIT 1),
+                    (SELECT TeamId FROM Teams WHERE Name = %s LIMIT 1),
+                    '0', -- jersey
                     %s,
-                    )""",
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (playerName, homeTeamName, awayTeamName, gameTime, playerTeamName, get2PFGM(lineArr), get2PFGA(lineArr), get3PFGM(lineArr), get3PFGA(lineArr), getFTM(lineArr), getFTA(lineArr), getOREB(lineArr), getDREB(lineArr), getAST(lineArr), getBLK(lineArr), getSTL(lineArr), getTO(lineArr), 0, getPFC(lineArr), 0, getMIN(lineArr)))
-        cursor.commit()
+        connection.commit()
 
     # , 1, 1, 1, 2, 30, 2, 12, 2, 2, 2, 6, 2, 1, 1, 3, 2, 2, 0, 29),
 
