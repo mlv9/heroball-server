@@ -4,14 +4,6 @@
 from datetime import datetime
 import psycopg2
 
-connection = psycopg2.connect(user = "postgres",
-                                  password = "postgres",
-                                  host = "127.0.0.1",
-                                  port = "5432",
-                                  database = "postgres")
-
-
-
 def getPlayerName(statLine):
     return statLine[headingsIndex["playDispNm"]]
 
@@ -124,7 +116,7 @@ def initTeamsAndPlayers():
         lineArr = line.split(',')
         if len(lineArr) < 2:
             continue
-            
+
         name = getPlayerName(lineArr)
         position = getPlayerPosition(lineArr)
         teamName = getPlayerTeamName(lineArr)
@@ -139,32 +131,41 @@ def initTeamsAndPlayers():
 
         teams[teamName] = {"Name": teamName}
 
-    cursor = connection.cursor()
 
-    # now insert into our DB
-    insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
+    try:
+        # now insert into our DB
+        connection = psycopg2.connect(user = "postgres",
+                                  password = "postgres",
+                                  host = "127.0.0.1",
+                                  port = "5432",
+                                  database = "postgres")
+        with connection.cursor() as cursor:
+        	insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
 
-    for team in teams:
-        cursor.execute(insert_team_query, (team["Name"]))
+        	for team in teams:
+        	    cursor.execute(insert_team_query, (team["Name"]))
 
-    insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
+      	  	insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
 
-    for player in players:
-        cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
+      	  	for player in players:
+      	      		cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
 
-    connection.commit()
+       		expected_insert_count = len(players) + len(teams)
+        	connection.commit()
 
-    expected_insert_count = len(players) + len(teams)
+        	if cursor.rowcount != expected_insert_count:
+            		raise Exception("Expected " , expected_insert_count , " inserts, got " , cursor.rowcount)
 
-    if cursor.rowcount != expected_insert_count:
-       raise Exception("Expected " + expected_insert_count + " inserts, got " + cursor.rowcount)
-    
-    cursor.close()
+        	cursor.close()
+
+    except Exception as error:
+        if(connection):
+            print("Failed to insert record into table", error)
 
 def initGames():
     # we need to build a map of each game and insert the record
     games = {}
-        
+
     for line in statLines:
         lineArr = line.split(',')
         if len(lineArr) < 2:
