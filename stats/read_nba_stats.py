@@ -49,52 +49,52 @@ def getPlayerPosition(statLine):
         raise Exception("Player position unknown: " + pos)
 
 def getAST(statLine):
-    return int(statLine[headingsIndex["playAST"]])
+    return statLine[headingsIndex["playAST"]]
 
 def getTO(statLine):
-    return int(statLine[headingsIndex["playTO"]])
+    return statLine[headingsIndex["playTO"]])
 
 def getOREB(statLine):
-    return int(statLine[headingsIndex["playORB"]])
+    return statLine[headingsIndex["playORB"]])
 
 def getDREB(statLine):
-    return int(statLine[headingsIndex["playDRB"]])
+    return statLine[headingsIndex["playDRB"]]
 
 def get2PFGA(statLine):
-    return int(statLine[headingsIndex["play2PA"]])
+    return statLine[headingsIndex["play2PA"]]
 
 def get2PFGM(statLine):
-    return int(statLine[headingsIndex["play2PM"]])
+    return statLine[headingsIndex["play2PM"]]
 
 def get3PFGM(statLine):
-    return int(statLine[headingsIndex["play3PM"]])
+    return statLine[headingsIndex["play3PM"]]
 
 def get3PFGA(statLine):
-    return int(statLine[headingsIndex["play3PA"]])
+    return statLine[headingsIndex["play3PA"]]
 
 def get2PFGM(statLine):
-    return int(statLine[headingsIndex["play3PM"]])
+    return statLine[headingsIndex["play3PM"]]
 
 def getFTA(statLine):
-    return int(statLine[headingsIndex["playFTA"]])
+    return statLine[headingsIndex["playFTA"]]
 
 def getFTM(statLine):
-    return int(statLine[headingsIndex["playFTM"]])
+    return statLine[headingsIndex["playFTM"]]
 
 def getBLK(statLine):
-    return int(statLine[headingsIndex["playBLK"]])
+    return statLine[headingsIndex["playBLK"]]
 
 def getMIN(statLine):
-    return int(statLine[headingsIndex["playMin"]])
+    return statLine[headingsIndex["playMin"]]
 
 def getPFC(statLine):
     count = int(statLine[headingsIndex["playPF"]])
     if count > 5:
         count = 5
-    return count
+    return str(count)
 
 def getSTL(statLine):
-    return int(statLine[headingsIndex["playSTL"]])
+    return statLine[headingsIndex["playSTL"]]
 
 def getGameDateTime(statLine):
     # '2017-10-17 08:00'
