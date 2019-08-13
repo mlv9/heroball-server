@@ -184,6 +184,7 @@ with connection.cursor() as cursor:
         cursor.execute("SELECT TeamId FROM Teams WHERE Name = %s;", (games[game]["AwayTeam"],))
         awayTeamId = cursor.fetchone()[0]
 
+        print("Inserting game between " + games[game]["HomeTeam"] + " and " + games[game]["AwayTeam"] + " on " + str(games[game]["GameTime"]))
         cursor.execute("INSERT INTO Games (CompetitionId, LocationId, HomeTeamId, AwayTeamId, GameTime) VALUES (%s, %s, %s, %s, %s)", (1, 1, homeTeamId, awayTeamId, games[game]["GameTime"]))
         connection.commit()
 
