@@ -145,7 +145,7 @@ def initTeamsAndPlayers():
             for team in teams:
                 cursor.execute(insert_team_query, (team["Name"]))
 
-      	    insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
+            insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
 
       	    for player in players:
       	            cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
