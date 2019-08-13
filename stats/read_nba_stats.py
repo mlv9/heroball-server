@@ -157,23 +157,33 @@ except Exception as error:
     if(connection):
         print("Failed to insert record into table", error)
 
-# def initGames():
-#     # we need to build a map of each game and insert the record
-#     games = {}
+# we need to build a map of each game and insert the record
+games = {}
 
-#     for line in statLines:
-#         lineArr = line.split(',')
-#         if len(lineArr) < 2:
-#             continue
 
-#         homeTeam = getHomeTeam(line)
-#         awayTeam = getAwayTeam(line)
-#         location = 'AIS'
-#         competition = 'NBA 2017-18'
-#         gameTime = getGameDateTime(line)
+for line in statLines:
+    lineArr = line.split(',')
+    if len(lineArr) < 2:
+        continue
 
-#         #do insert into the DB
+    homeTeam = getHomeTeam(line)
+    awayTeam = getAwayTeam(line)
+    gameTime = getGameDateTime(line)
 
+    gameKey = homeTeam + awayTeam + str(gameTime)
+
+    games[gameKey] = {"HomeTeam": homeTeam, "AwayTeam": awayTeam, "GameTime": gameTime}
+
+
+with connection.cursor() as cursor:
+
+    for game in games:
+        #do insert into the DB
+        homeTeamId = cursor.execute("SELECT TeamId FROM Teams WHERE TeamId = %s;" (games[game]["HomeTeam"],)).fetchOne()[0]
+        awayTeamId = cursor.execute("SELECT TeamId FROM Teams WHERE TeamId = %s;" (games[game]["AwayTeam"],)).fetchOne()[0]
+
+        cursor.execute("INSERT INTO Games (CompetitionId, LocationId, HomeTeamId, AwayTeamId, GameTime) VALUES (%s, %s, %s, %s, %s)", (1, 1, homeTeamId, awayTeamId, games[game]["GameTime"]))
+        connection.commit()
 
 # def loadGameStatsIntoDB():
 
