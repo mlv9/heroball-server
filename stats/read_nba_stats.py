@@ -120,16 +120,15 @@ for line in statLines:
     teamName = getPlayerTeamName(lineArr)
 
     players[name] = {
-        "Name":name,
+        "Name": name,
         "Position": position,
         "Email": "player@nba.com",
-        "YearStarted": 2000,
+        "YearStarted": "2000",
         "Description": "Player in 2017-18 NBA Season"
     }
 
     teams[teamName] = {"Name": teamName}
 
-    print(teams)
 try:
     # now insert into our DB
     connection = psycopg2.connect(user = "postgres",
@@ -139,24 +138,21 @@ try:
                                 database = "postgres")
     print(connection)
     with connection.cursor() as cursor:
-        print(cursor)
-        print(teams)
-        insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
+        insert_team_query = "INSERT INTO Teams (Name) VALUES (%s)"
 
         for team in teams:
-            print(team)
-            cursor.execute(insert_team_query, (team["Name"]))
+            print("Inserting team " + teams[team]["Name"])
+            cursor.execute(insert_team_query, (teams[team]["Name"],))
 
         insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
 
         for player in players:
-                cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
+            print("Inserting player " + players[player]["Name"])
+            cursor.execute(insert_player_query, (players[player]["Name"], players[player]["Position"], players[player]["Email"], players[player]["YearStarted"], players[player]["Description"]))
 
         expected_insert_count = len(players) + len(teams)
 
-        if cursor.rowcount != expected_insert_count:
-                raise Exception("Expected " , expected_insert_count , " inserts, got " , cursor.rowcount)
-
+        connection.commit()
 except Exception as error:
     if(connection):
         print("Failed to insert record into table", error)
