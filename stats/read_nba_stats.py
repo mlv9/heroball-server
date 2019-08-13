@@ -100,85 +100,83 @@ def getGameDateTime(statLine):
 headingsIndex = {}
 statLines = []
 
-def initDataSet():
-    fd = open('./2017-18_playerBoxScore.csv', 'r').read()
-    headings = fd.split('\n')[0].split(',')
-    statLines = fd.split('\n')[1:]
-    for i, val in enumerate(headings):
-        headingsIndex[val] = i
+fd = open('./2017-18_playerBoxScore.csv', 'r').read()
+headings = fd.split('\n')[0].split(',')
+statLines = fd.split('\n')[1:]
+for i, val in enumerate(headings):
+    headingsIndex[val] = i
 
-def initTeamsAndPlayers():
-    # get teams and players
-    teams = {}
-    players = {}
+# get teams and players
+teams = {}
+players = {}
 
-    for line in statLines:
-        lineArr = line.split(',')
-        if len(lineArr) < 2:
-            continue
+for line in statLines:
+    lineArr = line.split(',')
+    if len(lineArr) < 2:
+        continue
 
-        name = getPlayerName(lineArr)
-        position = getPlayerPosition(lineArr)
-        teamName = getPlayerTeamName(lineArr)
+    name = getPlayerName(lineArr)
+    position = getPlayerPosition(lineArr)
+    teamName = getPlayerTeamName(lineArr)
 
-        players[name] = {
-            "Name":name,
-            "Position": position,
-            "Email": "player@nba.com",
-            "YearStarted": 2000,
-            "Description": "Player in 2017-18 NBA Season"
-        }
+    players[name] = {
+        "Name":name,
+        "Position": position,
+        "Email": "player@nba.com",
+        "YearStarted": 2000,
+        "Description": "Player in 2017-18 NBA Season"
+    }
 
-        teams[teamName] = {"Name": teamName}
+    teams[teamName] = {"Name": teamName}
 
+    print(teams)
+try:
+    # now insert into our DB
+    connection = psycopg2.connect(user = "postgres",
+                                password = "postgres",
+                                host = "127.0.0.1",
+                                port = "5432",
+                                database = "postgres")
+    print(connection)
+    with connection.cursor() as cursor:
+        print(cursor)
         print(teams)
-    try:
-        # now insert into our DB
-        connection = psycopg2.connect(user = "postgres",
-                                  password = "postgres",
-                                  host = "127.0.0.1",
-                                  port = "5432",
-                                  database = "postgres")
-        print(connection)
-        with connection.cursor() as cursor:
-            print(cursor)
-            print(teams)
-            insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
+        insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
 
-            for team in teams:
-                print(team)
-                cursor.execute(insert_team_query, (team["Name"]))
+        for team in teams:
+            print(team)
+            cursor.execute(insert_team_query, (team["Name"]))
 
-            insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
+        insert_player_query = "INSERT INTO Players (Name, Position, Email, YearStarted, Description) VALUES (%s, %s, %s, %s, %s);"
 
-            for player in players:
-      	            cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
+        for player in players:
+                cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
 
-       	    expected_insert_count = len(players) + len(teams)
+        expected_insert_count = len(players) + len(teams)
 
-            if cursor.rowcount != expected_insert_count:
-                    raise Exception("Expected " , expected_insert_count , " inserts, got " , cursor.rowcount)
+        if cursor.rowcount != expected_insert_count:
+                raise Exception("Expected " , expected_insert_count , " inserts, got " , cursor.rowcount)
 
-    except Exception as error:
-        if(connection):
-            print("Failed to insert record into table", error)
+except Exception as error:
+    if(connection):
+        print("Failed to insert record into table", error)
 
-def initGames():
-    # we need to build a map of each game and insert the record
-    games = {}
+# def initGames():
+#     # we need to build a map of each game and insert the record
+#     games = {}
 
-    for line in statLines:
-        lineArr = line.split(',')
-        if len(lineArr) < 2:
-            continue
+#     for line in statLines:
+#         lineArr = line.split(',')
+#         if len(lineArr) < 2:
+#             continue
 
-        homeTeam = getHomeTeam(line)
-        awayTeam = getAwayTeam(line)
-        location = 'AIS'
-        competition = 'NBA 2017-18'
-        gameTime = getGameDateTime(line)
+#         homeTeam = getHomeTeam(line)
+#         awayTeam = getAwayTeam(line)
+#         location = 'AIS'
+#         competition = 'NBA 2017-18'
+#         gameTime = getGameDateTime(line)
 
-        #do insert into the DB
+#         #do insert into the DB
 
 
 # def loadGameStatsIntoDB():
@@ -228,8 +226,4 @@ def initGames():
     # , 1, 1, 1, 2, 30, 2, 12, 2, 2, 2, 6, 2, 1, 1, 3, 2, 2, 0, 29),
 
 
-
-initDataSet()
-initTeamsAndPlayers()
-initGames()
 
