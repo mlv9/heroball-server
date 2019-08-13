@@ -151,12 +151,9 @@ def initTeamsAndPlayers():
       	      		cursor.execute(insert_player_query, (player["Name"], player["Position"], player["Email"], player["YearStarted"], player["Description"]))
 
        		expected_insert_count = len(players) + len(teams)
-        	connection.commit()
 
         	if cursor.rowcount != expected_insert_count:
             		raise Exception("Expected " , expected_insert_count , " inserts, got " , cursor.rowcount)
-
-        	cursor.close()
 
     except Exception as error:
         if(connection):
