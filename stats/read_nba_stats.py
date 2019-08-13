@@ -66,6 +66,9 @@ def get2PFGA(statLine):
 def get2PFGM(statLine):
     return int(statLine[headingsIndex["play2PM"]])
 
+def get3PFGM(statLine):
+    return int(statLine[headingsIndex["play3PM"]])
+
 def get3PFGA(statLine):
     return int(statLine[headingsIndex["play3PA"]])
 
@@ -157,10 +160,8 @@ except Exception as error:
     if(connection):
         print("Failed to insert record into table", error)
 
-# we need to build a map of each game and insert the record
+# we need to build a map of each game to avoid duplicates
 games = {}
-
-
 for line in statLines:
     lineArr = line.split(',')
     if len(lineArr) < 2:
@@ -174,9 +175,8 @@ for line in statLines:
 
     games[gameKey] = {"HomeTeam": homeTeam, "AwayTeam": awayTeam, "GameTime": gameTime}
 
-
+# insert games
 with connection.cursor() as cursor:
-
     for game in games:
         #do insert into the DB
         cursor.execute("SELECT TeamId FROM Teams WHERE Name = %s;", (games[game]["HomeTeam"],))
@@ -188,49 +188,60 @@ with connection.cursor() as cursor:
         cursor.execute("INSERT INTO Games (CompetitionId, LocationId, HomeTeamId, AwayTeamId, GameTime) VALUES (%s, %s, %s, %s, %s)", (1, 1, homeTeamId, awayTeamId, games[game]["GameTime"]))
         connection.commit()
 
-# def loadGameStatsIntoDB():
 
-#     homeTeam = 
-#     awayTeam = 
-#     gameDateTime = 
+# now insert each PlayerGameStat
+stats = {}
+with connection.cursor() as cursor:
+    for line in statLines:
+        lineArr = line.split(',')
+        if len(lineArr) < 2:
+            continue
+
+        homeTeamName = getHomeTeam(lineArr)
+        awayTeamName = getAwayTeam(lineArr)
+        gameTime = getGameDateTime(lineArr)
+        playerName = getPlayerName(lineArr)
+        playerTeamName = getPlayerTeamName(lineArr)
     
-    # oh dear, so much to do
-    # INSERT INTO PlayerGameStats (
-    #     PlayerId,
-    #     GameId, 
-    #     TeamId, 
-    #     JerseyNumber,
-    #     TwoPointFGM,
-    #     TwoPointFGA,
-    #     ThreePointFGM,
-    #     ThreePointFGA,
-    #     FreeThrowsMade,
-    #     FreeThrowsAttempted,
-    #     OffensiveRebounds,
-    #     DefensiveRebounds,
-    #     Assists,
-    #     Blocks,
-    #     Steals,
-    #     Turnovers,
-    #     RegularFoulsForced,
-    #     RegularFoulsCommitted,
-    #     TechnicalFoulsCommitted,
-    #     MinutesPlayed)
-    #     VALUES 
-    #         (
-#                  (SELECT PlayerId FROM Players WHERE Name = %s), 
-#                  (SELECT 
-#                       GameId 
-#                  FROM 
-#                       Games 
-#                   WHERE 
-#                       AwayTeamId = (SELECT TeamId FROM Teams WHERE Name = %s) AND 
-#                       HomeTeamId = (SELECT TeamId FROM Teams WHERE Name = %s) AND 
-#                       GameTime = %s),
-#                   (SELECT TeamId FROM Teams WHERE Name = %s),
-#                   0, -- jersey number, lets fake it for now
-#                   %s,
-
+        # oh dear, so much to do
+        cursor.execute("""INSERT INTO PlayerGameStats (
+            PlayerId,
+            GameId, 
+            TeamId, 
+            JerseyNumber,
+            TwoPointFGM,
+            TwoPointFGA,
+            ThreePointFGM,
+            ThreePointFGA,
+            FreeThrowsMade,
+            FreeThrowsAttempted,
+            OffensiveRebounds,
+            DefensiveRebounds,
+            Assists,
+            Blocks,
+            Steals,
+            Turnovers,
+            RegularFoulsForced,
+            RegularFoulsCommitted,
+            TechnicalFoulsCommitted,
+            MinutesPlayed)
+            VALUES 
+                (
+                    (SELECT PlayerId FROM Players WHERE Name = %s), 
+                    (SELECT 
+                        GameId 
+                    FROM 
+                        Games 
+                    WHERE 
+                        AwayTeamId = (SELECT TeamId FROM Teams WHERE Name = %s) AND 
+                        HomeTeamId = (SELECT TeamId FROM Teams WHERE Name = %s) AND 
+                        GameTime = %s),
+                    (SELECT TeamId FROM Teams WHERE Name = %s),
+                    0,
+                    %s,
+                    )""",
+                    (playerName, homeTeamName, awayTeamName, gameTime, playerTeamName, get2PFGM(lineArr), get2PFGA(lineArr), get3PFGM(lineArr), get3PFGA(lineArr), getFTM(lineArr), getFTA(lineArr), getOREB(lineArr), getDREB(lineArr), getAST(lineArr), getBLK(lineArr), getSTL(lineArr), getTO(lineArr), 0, getPFC(lineArr), 0, getMIN(lineArr)))
+        cursor.commit()
 
     # , 1, 1, 1, 2, 30, 2, 12, 2, 2, 2, 6, 2, 1, 1, 3, 2, 2, 0, 29),
 
