@@ -139,7 +139,9 @@ def initTeamsAndPlayers():
                                   host = "127.0.0.1",
                                   port = "5432",
                                   database = "postgres")
+        print(connection)
         with connection.cursor() as cursor:
+            print(cursor)
             insert_team_query = "INSERT INTO Teams (Name) VALUES (%s);"
 
             for team in teams:
