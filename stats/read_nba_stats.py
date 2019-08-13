@@ -131,7 +131,7 @@ def initTeamsAndPlayers():
 
         teams[teamName] = {"Name": teamName}
 
-
+        print(teams)
     try:
         # now insert into our DB
         connection = psycopg2.connect(user = "postgres",
@@ -226,8 +226,6 @@ def initGames():
 
 
     # , 1, 1, 1, 2, 30, 2, 12, 2, 2, 2, 6, 2, 1, 1, 3, 2, 2, 0, 29),
-
-
 
 
 
