@@ -95,7 +95,7 @@ def getSTL(statLine):
 
 def getGameDateTime(statLine):
     # 17/10/2017 8:00:00 am
-    return datetime.strptime(statLine[headingsIndex['gmDate']] + ' ' + statLine[headingsIndex['gmTime']], '%d/%m/%Y %H:%M:%S %p')
+    return datetime.strptime(statLine[headingsIndex['gmDate']] + ' ' + statLine[headingsIndex['gmTime']], '%d/%m/%Y %H:%M')
 
 headingsIndex = {}
 statLines = []
