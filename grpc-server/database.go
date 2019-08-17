@@ -225,13 +225,13 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 	case "2PFG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.TwoPointFGM), 0)::float / COALESCE(SUM(PlayerGameStats.TwoPointFGA), 1)::float
+				COALESCE(SUM(PlayerGameStats.TwoPointFGM), 0)::float / COALESCE(NULLIF(SUM(PlayerGameStats.TwoPointFGA), 0), 1)::float
 			DESC`
 		break
 	case "3PFG":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.ThreePointFGM), 0)::float / COALESCE(SUM(PlayerGameStats.ThreePointFGA), 1)::float
+				COALESCE(SUM(PlayerGameStats.ThreePointFGM), 0)::float / COALESCE(NULLIF(SUM(PlayerGameStats.ThreePointFGA), 0), 1)::float
 			DESC`
 		break
 	case "MPG":
@@ -249,7 +249,7 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 	case "FT":
 		ordering = `
 			ORDER BY
-				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)::float / COALESCE(SUM(PlayerGameStats.FreeThrowsAttempted), 1)::float
+				COALESCE(SUM(PlayerGameStats.FreeThrowsMade), 0)::float / COALESCE(NULLIF(SUM(PlayerGameStats.FreeThrowsAttempted), 0), 1)::float
 			DESC`
 		break
 	default:
