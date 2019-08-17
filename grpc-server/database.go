@@ -259,16 +259,19 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 	log.Printf("Got a stats request: for %+v, against: %+v, ordering %v", forRequest, againstRequest, request.GetOrdering())
 
 	combinedCompIds := append(forRequest.CompetitionIds, forRequest.CompetitionIds...)
+	combinedTeamIds := append(forRequest.TeamIds, forRequest.TeamIds...)
 
 	/* we need to get stats leaders */
 	leaders, playerIds, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		`(cardinality($1::int[]) IS NULL OR Games.CompetitionId = ANY($1)) AND
 		(cardinality($2::int[]) IS NULL OR NOT (PlayerGameStats.TeamId = ANY($2))) AND
-		(cardinality($3::int[]) IS NULL OR PlayerGameStats.TeamId = ANY($3)) AND
-		(cardinality($4::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($4))`,
+		(cardinality($3::int[]) IS NULL OR (Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3))) AND
+		(cardinality($4::int[]) IS NULL OR PlayerGameStats.TeamId = ANY($4)) AND
+		(cardinality($5::int[]) IS NULL OR PlayerGameStats.PlayerId = ANY($5))`,
 		[]interface{}{
 			pq.Array(combinedCompIds),
 			pq.Array(againstRequest.TeamIds),
+			pq.Array(combinedTeamIds),
 			pq.Array(forRequest.TeamIds),
 			pq.Array(forRequest.PlayerIds)},
 		"GROUP BY PlayerGameStats.PlayerId",
