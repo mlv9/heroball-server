@@ -765,7 +765,7 @@ func (database *HeroBallDatabase) GetPlayerGamesStats(request *pb.GetPlayerGames
 			request.GetPlayerId(),
 			pq.Array(againstRequest.CompetitionIds),
 			pq.Array(againstRequest.TeamIds),
-			request.GetOffset(), request.GetCount()})
+			request.GetOffset(), request.GetCount()}, request.GetOffset(), request.GetCount())
 
 	if err != nil {
 		return nil, err
