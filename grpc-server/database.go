@@ -163,7 +163,7 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 	return compInfo, nil
 }
 
-func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+func (database *HeroBallDatabase) GetPlayerAverageStats(request *pb.GetPlayerAverageStatsRequest) (*pb.GetPlayerAverageStatsResponse, error) {
 
 	forRequest := &pb.ForStatsRequest{
 		CompetitionIds: make([]int32, 0),
@@ -287,7 +287,7 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 	}
 
 	if len(playerIds) < 1 {
-		return &pb.GetStatsResponse{}, nil
+		return &pb.GetPlayerAverageStatsResponse{}, nil
 	}
 
 	players, err := database.getPlayersById(playerIds)
@@ -312,7 +312,7 @@ func (database *HeroBallDatabase) GetStats(request *pb.GetStatsRequest) (*pb.Get
 		})
 	}
 
-	return &pb.GetStatsResponse{
+	return &pb.GetPlayerAverageStatsResponse{
 		AggregateStats: playerStats,
 	}, nil
 }
@@ -736,5 +736,52 @@ func (database *HeroBallDatabase) GetGamesCursor(offset int32, count int32, filt
 		NextOffset: nextOffset,
 		Games:      games,
 		Filter:     filter,
+	}, nil
+}
+
+func (database *HeroBallDatabase) GetPlayerGamesStats(request *pb.GetPlayerGamesStatsRequest) (*pb.GetPlayerGamesStatsResponse, error) {
+
+	againstRequest := &pb.AgainstStatsRequest{
+		CompetitionIds: make([]int32, 0),
+		TeamIds:        make([]int32, 0),
+	}
+
+	if request.GetPlayerId() <= 0 {
+		return nil, fmt.Errorf("Invalid playerId")
+	}
+
+	if request.GetAgainst() != nil {
+		againstRequest = request.GetAgainst()
+	}
+
+	log.Printf("Got a stats request for games by player %v: against: %+v", request.GetPlayerId(), againstRequest)
+
+	stats, err := database.getPlayerGameStatsByConditionAndOffsetAndCount(`
+		PlayerGameStats.PlayerId = $1 AND 
+		(cardinality($2::int[]) IS NULL OR Games.CompetitionId = ANY($2)) AND
+		(cardinality($3::int[]) IS NULL OR Games.HomeTeamId = ANY($3) OR Games.AwayTeamId = ANY($3))
+		`,
+		[]interface{}{
+			request.GetPlayerId(),
+			againstRequest.CompetitionIds,
+			againstRequest.TeamIds},
+		request.GetOffset(), request.GetCount())
+
+	if err != nil {
+		return nil, err
+	}
+
+	/* now we need the matching games */
+	gameIds := make([]int32, 0)
+
+	for _, game := range stats {
+		gameIds = append(gameIds, game.GameId)
+	}
+
+	games, err := database.getGamesById(gameIds)
+
+	return &pb.GetPlayerGamesStatsResponse{
+		Games: games,
+		Stats: stats,
 	}, nil
 }

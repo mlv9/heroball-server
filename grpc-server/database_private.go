@@ -129,7 +129,7 @@ func (database *HeroBallDatabase) getPlayerStatsForGame(playerId int32, gameId i
 		return nil, fmt.Errorf("Invalid gameId")
 	}
 
-	stats, err := database.getPlayerGameStatsByCondition("PlayerGameStats.PlayerId = $1 AND PlayerGameStats.GameId = $2", []interface{}{playerId, gameId})
+	stats, err := database.getPlayerGameStatsByConditionAndOffsetAndCount("PlayerGameStats.PlayerId = $1 AND PlayerGameStats.GameId = $2", []interface{}{playerId, gameId}, 0, 0)
 
 	if err != nil {
 		return nil, err
@@ -196,9 +196,17 @@ func (database *HeroBallDatabase) getPlayerTotalStatsForAllTime(playerId int32) 
 	}, nil
 }
 
-func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions string, args []interface{}) ([]*pb.PlayerGameStats, error) {
+func (database *HeroBallDatabase) getPlayerGameStatsByConditionAndOffsetAndCount(conditions string, args []interface{}, offset int32, count int32) ([]*pb.PlayerGameStats, error) {
 
 	joinedStats := make([]*pb.PlayerGameStats, 0)
+
+	if count > 0 {
+		conditions = fmt.Sprintf("%v LIMIT %v", conditions, count)
+	}
+
+	if offset > 0 {
+		conditions = fmt.Sprintf("%v OFFSET %v", conditions, offset)
+	}
 
 	rows, err := database.db.Query(fmt.Sprintf(`
 		SELECT
@@ -238,7 +246,10 @@ func (database *HeroBallDatabase) getPlayerGameStatsByCondition(conditions strin
 		LEFT JOIN
 			Leagues ON Competitions.LeagueId = Leagues.LeagueId
 		WHERE 
-			%v`,
+			%v
+		ORDER BY
+			Games.GameTime
+		DESC`,
 		conditions), args...)
 
 	if err == sql.ErrNoRows {
@@ -1769,35 +1780,3 @@ func (database *HeroBallDatabase) getCompetitionForTeam(teamId int32) (int32, er
 
 	return competitionId, nil
 }
-
-// func (database *HeroBallDatabase) getStatsLeadersForTeam(teamId int32) (*pb.BasicStatsLeaders, error) {
-
-// 	competitionId, err := database.getCompetitionForTeam(teamId)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	teamGameCount, err := database.getTeamGameCount(teamId)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	requiredGameCount := int32(math.Ceil(float64(teamGameCount) / 3))
-
-// 	return database.getStatsLeaders(competitionId, requiredGameCount, "PlayerGameStats.TeamId = $1", []interface{}{teamId})
-// }
-
-// func (database *HeroBallDatabase) getStatsLeadersForCompetition(competitionId int32) (*pb.BasicStatsLeaders, error) {
-
-// 	roundsInComp, err := database.getCompetitionRoundCount(competitionId)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	requiredGameCount := int32(math.Ceil(float64(roundsInComp) / 3))
-
-// 	return database.getStatsLeaders(competitionId, requiredGameCount, "Games.CompetitionId = $1", []interface{}{competitionId})
-// }

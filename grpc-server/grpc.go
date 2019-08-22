@@ -136,9 +136,21 @@ func (hb *HeroBall) GetHeroBallMetadata(context context.Context, request *pb.Get
 	return values, nil
 }
 
-func (hb *HeroBall) GetStats(context context.Context, request *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+func (hb *HeroBall) GetPlayerAverageStats(context context.Context, request *pb.GetPlayerAverageStatsRequest) (*pb.GetPlayerAverageStatsResponse, error) {
 
-	values, err := hb.db.GetStats(request)
+	values, err := hb.db.GetPlayerAverageStats(request)
+
+	if err != nil {
+		log.Printf("Error getting stats: %v", err)
+		return nil, err
+	}
+
+	return values, nil
+}
+
+func (hb *HeroBall) GetPlayerGamesStats(context context.Context, request *pb.GetPlayerGamesStatsRequest) (*pb.GetPlayerGamesStatsResponse, error) {
+
+	values, err := hb.db.GetPlayerGamesStats(request)
 
 	if err != nil {
 		log.Printf("Error getting stats: %v", err)
