@@ -200,6 +200,8 @@ func (database *HeroBallDatabase) getPlayerGameStatsByConditionAndOffsetAndCount
 
 	joinedStats := make([]*pb.PlayerGameStats, 0)
 
+	conditions = fmt.Sprintf("%v ORDER BY Games.GameTime DESC", conditions)
+
 	if count > 0 {
 		conditions = fmt.Sprintf("%v LIMIT %v", conditions, count)
 	}
@@ -246,10 +248,7 @@ func (database *HeroBallDatabase) getPlayerGameStatsByConditionAndOffsetAndCount
 		LEFT JOIN
 			Leagues ON Competitions.LeagueId = Leagues.LeagueId
 		WHERE 
-			%v
-		ORDER BY
-			Games.GameTime
-		DESC`,
+			%v`,
 		conditions), args...)
 
 	if err == sql.ErrNoRows {
