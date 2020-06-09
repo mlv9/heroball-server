@@ -24,5 +24,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Fatal(http.ListenAndServeTLS(":443", "/etc/letsencrypt/live/api.heroball.app/fullchain.pem", "/etc/letsencrypt/live/api.heroball.app/privkey.pem", mux))
+	log.Fatal(http.ListenAndServeTLS(":443", "/etc/letsencrypt/live/api.heroball.xyz/fullchain.pem", "/etc/letsencrypt/live/api.heroball.xyz/privkey.pem", mux))
 }
