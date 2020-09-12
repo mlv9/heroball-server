@@ -119,7 +119,7 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 	compInfo.Competition = comp
 
 	/* now get locations */
-	locationIds, err := database.getCompetitionLocations(competitionId)
+	locationIds, err := database.getCompetitionLocationIds(competitionId)
 
 	if err != nil {
 		return nil, err
@@ -133,13 +133,13 @@ func (database *HeroBallDatabase) GetCompetitionInfo(competitionId int32) (*pb.C
 
 	compInfo.Locations = locations
 
-	teams, err := database.getStandingsForCompetition(competitionId)
+	getOrderedteams, err := database.getStandingsForCompetition(competitionId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	compInfo.Teams = teams
+	compInfo.Teams = getOrderedteams
 
 	gameCursor, err := database.GetGamesCursor(0, recentGameCount, &pb.GamesFilter{
 		CompetitionIds: []int32{competitionId},

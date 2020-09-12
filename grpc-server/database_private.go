@@ -424,6 +424,7 @@ func (database *HeroBallDatabase) getResultForGame(gameId int32) (*pb.GameResult
 	return results[0], nil
 }
 
+/* optimise with Postgres MATERIAL VIEW */
 func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.GameResult, error) {
 
 	if gameIds == nil {
@@ -486,6 +487,7 @@ func (database *HeroBallDatabase) getResultsForGames(gameIds []int32) ([]*pb.Gam
 	return results, nil
 }
 
+/* possible optimisation using MATERIAL VIEW */
 func (database *HeroBallDatabase) getStatsForTeamInGame(teamId int32, gameId int32) (*pb.Stats, error) {
 	stats, _, err := database.getAggregateStatsByConditionAndGroupingAndOrderAndLimitAndOffset(
 		"PlayerGameStats.TeamId = $1 AND PlayerGameStats.GameId = $2",
@@ -1133,7 +1135,7 @@ func (database *HeroBallDatabase) getFirstAndLastGameForCompetitionId(competitio
 	return firstGameTime, lastGameTime, nil
 }
 
-func (database *HeroBallDatabase) getCompetitionLocations(competitionId int32) ([]int32, error) {
+func (database *HeroBallDatabase) getCompetitionLocationIds(competitionId int32) ([]int32, error) {
 
 	if competitionId <= 0 {
 		return nil, fmt.Errorf("Invalid competitionId")
