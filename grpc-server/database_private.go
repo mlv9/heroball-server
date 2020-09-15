@@ -1591,6 +1591,7 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 			CompetitionId = $1
 		ORDER BY
 			GamesWon
+		DESC
 		`,
 		competitionId)
 
