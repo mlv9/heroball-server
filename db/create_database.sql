@@ -70,3 +70,65 @@ CREATE TABLE PlayerGameStats (
     TechnicalFoulsCommitted int DEFAULT 0 CONSTRAINT technical_fouls_committed_validation CHECK (2 >= TechnicalFoulsCommitted),
     MinutesPlayed int DEFAULT 0
 );
+
+DROP FUNCTION TotalPoints;
+CREATE FUNCTION TotalPoints(threes bigint, twos bigint, freeThrows bigint, out totalPoints bigint)
+AS $$ SELECT 
+    COALESCE(threes*3, 0) + 
+    COALESCE(twos*2, 0) + 
+    COALESCE(freeThrows, 0) $$
+LANGUAGE SQL;
+
+DROP MATERIALIZED VIEW GameScoresView;
+
+CREATE MATERIALIZED VIEW GameScoresView AS
+    SELECT
+        GameId,
+        CompetitionId,
+        (SELECT TotalPoints(SUM(PlayerGameStats.ThreePointFGM), SUM(PlayerGameStats.TwoPointFGM), SUM(PlayerGameStats.FreeThrowsMade)) FROM PlayerGameStats WHERE TeamId = HomeTeamId AND PlayerGameStats.GameId = Games.GameId) As HomeTeamPoints,
+        (SELECT TotalPoints(SUM(PlayerGameStats.ThreePointFGM), SUM(PlayerGameStats.TwoPointFGM), SUM(PlayerGameStats.FreeThrowsMade)) FROM PlayerGameStats WHERE TeamId = AwayTeamId AND PlayerGameStats.GameId = Games.GameId) As AwayTeamPoints
+    FROM
+        Games;
+
+DROP MATERIALIZED VIEW CompetitionStandingsView;
+
+CREATE MATERIALIZED VIEW CompetitionStandingsView AS
+    SELECT
+        CompetitionTeams.CompetitionId,
+        CompetitionTeams.TeamId,
+        (SELECT Name FROM Teams WHERE Teams.TeamId = CompetitionTeams.TeamId) As TeamName,
+        (
+            SELECT
+                COUNT(GameScoresView.GameId)
+            FROM
+                Games LEFT JOIN 
+                GameScoresView ON Games.GameId = GameScoresView.GameId
+            WHERE
+                (Games.AwayTeamId = CompetitionTeams.TeamId AND GameScoresView.AwayTeamPoints > GameScoresView.HomeTeamPoints) OR 
+                (Games.HomeTeamId = CompetitionTeams.TeamId AND GameScoresView.HomeTeamPoints > GameScoresView.AwayTeamPoints)
+        ) AS GamesWon,
+        (
+            SELECT
+                COUNT(GameScoresView.GameId)
+            FROM
+                Games LEFT JOIN 
+                GameScoresView ON Games.GameId = GameScoresView.GameId
+            WHERE
+                (Games.AwayTeamId = CompetitionTeams.TeamId AND GameScoresView.AwayTeamPoints = GameScoresView.HomeTeamPoints) OR 
+                (Games.HomeTeamId = CompetitionTeams.TeamId AND GameScoresView.HomeTeamPoints = GameScoresView.AwayTeamPoints)
+        ) AS GamesDrawn,
+        (
+            SELECT
+                COUNT(GameScoresView.GameId)
+            FROM
+                Games LEFT JOIN 
+                GameScoresView ON Games.GameId = GameScoresView.GameId
+            WHERE
+                (Games.AwayTeamId = CompetitionTeams.TeamId AND GameScoresView.AwayTeamPoints < GameScoresView.HomeTeamPoints) OR 
+                (Games.HomeTeamId = CompetitionTeams.TeamId AND GameScoresView.HomeTeamPoints < GameScoresView.AwayTeamPoints)
+        ) AS GamesLost
+        FROM
+            (SELECT CompetitionId, HomeTeamId As TeamId FROM Games UNION SELECT CompetitionId, AwayTeamId As TeamId FROM Games) As CompetitionTeams;
+
+REFRESH MATERIALIZED VIEW CompetitionStandingsView;
+

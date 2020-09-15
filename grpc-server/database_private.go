@@ -3,8 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"math"
-	"sort"
 
 	"github.com/lib/pq"
 
@@ -1568,6 +1566,7 @@ func (database *HeroBallDatabase) getLocations(locationIds []int32) ([]*pb.Locat
 	return locations, nil
 }
 
+/* OPTIMISE with MATERIAL VIEW */
 func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32) ([]*pb.CompetitionTeam, error) {
 
 	/* get games in compeittion */
@@ -1576,150 +1575,58 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 		return nil, fmt.Errorf("Invalid competitionId")
 	}
 
-	results, err := database.getResultsForCompetition(competitionId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	/* now to create an ordered list of teams */
-	teamsMap := make(map[int32]*pb.CompetitionTeam)
-
-	for _, result := range results {
-
-		_, exists := teamsMap[result.HomeTeamId]
-
-		if !exists {
-
-			/* get the team */
-			team, err := database.getTeamById(result.HomeTeamId)
-
-			if err != nil {
-				return nil, err
-			}
-
-			teamsMap[result.HomeTeamId] = &pb.CompetitionTeam{
-				Team: team,
-			}
-		}
-
-		if result.HomeTeamPoints > result.AwayTeamPoints {
-			teamsMap[result.HomeTeamId].Won++
-		} else if result.HomeTeamPoints < result.AwayTeamPoints {
-			teamsMap[result.HomeTeamId].Lost++
-		} else {
-			teamsMap[result.HomeTeamId].Drawn++
-		}
-
-		/* and away team */
-		_, exists = teamsMap[result.AwayTeamId]
-
-		if !exists {
-
-			/* get the team */
-			team, err := database.getTeamById(result.AwayTeamId)
-
-			if err != nil {
-				return nil, err
-			}
-
-			teamsMap[result.AwayTeamId] = &pb.CompetitionTeam{
-				Team: team,
-			}
-		}
-
-		if result.AwayTeamPoints > result.HomeTeamPoints {
-			teamsMap[result.AwayTeamId].Won++
-		} else if result.AwayTeamPoints < result.HomeTeamPoints {
-			teamsMap[result.AwayTeamId].Lost++
-		} else {
-			teamsMap[result.AwayTeamId].Drawn++
-		}
-	}
+	/* QUERY CompetitionStandingsView HERE */
 
 	/* now turn the teams map into an ordered list */
-	standings := make([]*pb.CompetitionTeam, 0)
+	teams := make([]*pb.CompetitionTeam, 0)
 
-	/* into a list */
-	for _, team := range teamsMap {
-		standings = append(standings, team)
+	rows, err := database.db.Query(`
+		SELECT 
+			TeamId, 
+			TeamName, 
+			GamesWon, 
+			GamesLost,
+			GamesDrawn
+		FROM 
+			CompetitionStandingsView 
+		WHERE 
+			CompetitionId = $1
+		ORDER BY
+			GamesWon
+		`,
+		competitionId)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("That competitionId does not exist")
 	}
-
-	/* sorted on wins for the moment */
-	sort.Slice(standings, func(i, j int) bool {
-		return standings[i].Won > standings[j].Won
-	})
-
-	return standings, nil
-}
-
-func (database *HeroBallDatabase) getResultsForCompetition(competitionId int32) ([]*pb.GameResult, error) {
-
-	gameIds, err := database.getGameIdsForCompetitionId(competitionId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return database.getResultsForGames(gameIds)
-}
+	for rows.Next() {
 
-func (database *HeroBallDatabase) getCompetitionRoundCount(competitionId int32) (int32, error) {
+		team := &pb.CompetitionTeam{
+			Team: &pb.Team{},
+		}
 
-	var gameCount int32
-	var teamCount int32
+		/* now to scan them all */
+		err = rows.Scan(team.Team.TeamId, team.Team.Name, team.Won, team.Lost, team.Drawn)
 
-	if competitionId <= 0 {
-		return 0, fmt.Errorf("Invalid competitionId")
+		if err != nil {
+			return nil, err
+		}
+
+		teams = append(teams, team)
 	}
 
-	err := database.db.QueryRow(`
-		SELECT
-			COUNT(Games.GameId)
-		FROM
-			Games
-		WHERE
-			CompetitionId = $1	
-	`, competitionId).Scan(&gameCount)
-
-	if err == sql.ErrNoRows {
-		return 0, nil
-	}
+	err = rows.Err()
 
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	/* get team count */
-	err = database.db.QueryRow(`
-		SELECT
-			COUNT(DISTINCT Games.HomeTeamId)
-		FROM
-			Games
-		WHERE
-			CompetitionId = $1
-		UNION
-		SELECT
-			COUNT(DISTINCT Games.AwayTeamId)
-		FROM
-			Games
-		WHERE
-			CompetitionId = $1
-	`, competitionId).Scan(&teamCount)
-
-	if err == sql.ErrNoRows {
-		return 0, nil
-	}
-
-	if err != nil {
-		return 0, err
-	}
-
-	/* round count is games divided by teams, floored */
-	rounds := math.Floor(float64(gameCount) / float64(teamCount))
-
-	return int32(rounds), nil
-
+	return teams, nil
 }
 
 func (database *HeroBallDatabase) getTeamGameCount(teamId int32) (int32, error) {
