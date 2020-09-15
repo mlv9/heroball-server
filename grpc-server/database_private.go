@@ -1615,7 +1615,7 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 			return nil, err
 		}
 
-		teams = append(teams, team)
+		teams = append(teams, &team)
 	}
 
 	err = rows.Err()
