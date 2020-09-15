@@ -1575,8 +1575,6 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 		return nil, fmt.Errorf("Invalid competitionId")
 	}
 
-	/* QUERY CompetitionStandingsView HERE */
-
 	/* now turn the teams map into an ordered list */
 	teams := make([]*pb.CompetitionTeam, 0)
 
@@ -1606,12 +1604,12 @@ func (database *HeroBallDatabase) getStandingsForCompetition(competitionId int32
 
 	for rows.Next() {
 
-		team := &pb.CompetitionTeam{
+		team := pb.CompetitionTeam{
 			Team: &pb.Team{},
 		}
 
 		/* now to scan them all */
-		err = rows.Scan(team.Team.TeamId, team.Team.Name, team.Won, team.Lost, team.Drawn)
+		err = rows.Scan(&team.Team.TeamId, &team.Team.Name, &team.Won, &team.Lost, &team.Drawn)
 
 		if err != nil {
 			return nil, err
