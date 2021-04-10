@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/heroballapp/server/protobuf"
+	pb "github.com/mlv9/protobuf"
 
 	"google.golang.org/grpc"
 )

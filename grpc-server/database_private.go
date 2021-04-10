@@ -6,7 +6,7 @@ import (
 
 	"github.com/lib/pq"
 
-	pb "github.com/heroballapp/server/protobuf"
+	pb "github.com/mlv9/protobuf"
 )
 
 func (database *HeroBallDatabase) getPlayerProfile(playerId int32) (*pb.PlayerProfile, error) {

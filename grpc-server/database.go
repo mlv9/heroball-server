@@ -9,7 +9,7 @@ import (
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 
-	pb "github.com/heroballapp/server/protobuf"
+	pb "github.com/mlv9/protobuf"
 )
 
 type HeroBallDatabase struct {
