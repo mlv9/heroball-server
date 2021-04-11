@@ -1,7 +1,7 @@
-name: Go
+name: Build Workflow
 
 env:
-  GOPRIVATE: "github.com/mlv9/protobuf"
+  GOPRIVATE: "github.com/mlv9/*"
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v2
 
-    - name: Set up Go
+    - name: Set up Go env
       uses: actions/setup-go@v2
       with:
         go-version: 1.16
@@ -45,10 +45,17 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push grpc-server
-      id: docker_build
       uses: docker/build-push-action@v2
       with:
         context: ./grpc-server
         file: ./grpc-server/Dockerfile
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/grpc-server:latest
+        tags: ghcr.io/${{ github.repository_owner }}/heroball/grpc-server:latest
+
+    - name: Build and push grpc-gateway
+      uses: docker/build-push-action@v2
+      with:
+        context: ./grpc-gateway
+        file: ./grpc-gateway/Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository_owner }}/heroball/grpc-gateway:latest
