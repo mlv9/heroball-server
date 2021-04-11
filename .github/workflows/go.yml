@@ -19,12 +19,12 @@ jobs:
       with:
         go-version: 1.16
 
-    - name: Checkout Protobuf
-      uses: actions/checkout@v2
-      with:
-        repository: mlv9/protobuf
-        ref: master
-        ssh-key: ${{secrets.PROTOBUF_DEPLOY_KEY}}
+#     - name: Checkout Protobuf
+#       uses: actions/checkout@v2
+#       with:
+#         repository: mlv9/protobuf
+#         ref: master
+#         ssh-key: ${{secrets.PROTOBUF_DEPLOY_KEY}}
         
     - name: Build
       run: go build -v ./...
@@ -43,7 +43,7 @@ jobs:
       id: docker_build
       uses: docker/build-push-action@v2
       with:
-        context: ./
+        context: ./grpc-server
         file: ./grpc-server/Dockerfile
         push: true
         tags: ghcr.io/${{ github.repository_owner }}/grpc-server:latest
