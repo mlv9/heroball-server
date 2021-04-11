@@ -1,3 +1,3 @@
 FROM scratch
-ADD gateway /
-CMD ["/gateway"]
+ADD grpc-gateway /
+CMD ["/grpc-gateway"]

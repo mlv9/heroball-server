@@ -2,8 +2,8 @@
 all: gateway docker
 
 gateway:
-	CGO_ENABLED=0 go build -o gateway .
+	CGO_ENABLED=0 go build -o grpc-gateway .
 docker:
-	docker build -t heroball-gateway:latest .
+	docker build -t grpc-gateway:latest .
 clean:
-	rm gateway
+	rm grpc-gateway
