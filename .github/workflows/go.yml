@@ -1,5 +1,8 @@
 name: Go
 
+env:
+  GOPRIVATE: "github.com/mlv9/protobuf"
+
 on:
   push:
     branches: [ ISS-3 ]
@@ -19,13 +22,12 @@ jobs:
       with:
         go-version: 1.16
 
-#     - name: Checkout Protobuf
-#       uses: actions/checkout@v2
-#       with:
-#         repository: mlv9/protobuf
-#         ref: master
-#         ssh-key: ${{secrets.PROTOBUF_DEPLOY_KEY}}
-        
+    - name: Configure git for private golang modules
+      env:
+        TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        USERNAME: ${{ github.repository_owner }}
+      run: git config --global url."https://${USERNAME}:${TOKEN}@github.com".insteadOf "https://github.com"
+
     - name: Build
       run: go build -v ./...
 
