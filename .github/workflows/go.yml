@@ -29,10 +29,10 @@ jobs:
       run: git config --global url."https://${USERNAME}:${TOKEN}@github.com".insteadOf "https://github.com"
 
     - name: Build grpc-server
-      run: cd grpc-server && go build -0 grpc-server -v .
+      run: cd grpc-server && go build -o grpc-server -v .
 
     - name: Build grpc-gateway
-      run: cd grpc-gateway && go build -0 grpc-gateway -v .
+      run: cd grpc-gateway && go build -o grpc-gateway -v .
 
     - name: Test
       run: go test -v ./...
