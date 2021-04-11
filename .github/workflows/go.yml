@@ -22,8 +22,8 @@ jobs:
     - name: Checkout Protobuf
       uses: actions/checkout@v2
       with:
-        repository: 'github.com/mlv9/protobuf'
-        ref: 'master'
+        repository: mlv9/protobuf
+        ref: master
         ssh-key: ${{secrets.PROTOBUF_DEPLOY_KEY}}
         
     - name: Build
