@@ -1,0 +1,61 @@
+name: Build Workflow
+
+env:
+  GOPRIVATE: "github.com/mlv9/*"
+
+on:
+  push:
+    branches: [ ISS-3 ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v2
+
+    - name: Set up Go env
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: Configure git for private golang modules
+      env:
+        TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        USERNAME: ${{ github.repository_owner }}
+      run: git config --global url."https://${USERNAME}:${TOKEN}@github.com".insteadOf "https://github.com"
+
+    - name: Build grpc-server
+      run: cd grpc-server && go build -o grpc-server -v .
+
+    - name: Build grpc-gateway
+      run: cd grpc-gateway && go build -o grpc-gateway -v .
+
+    - name: Test
+      run: go test -v ./...
+      
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push grpc-server
+      uses: docker/build-push-action@v2
+      with:
+        context: ./grpc-server
+        file: ./grpc-server/Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository_owner }}/heroball/grpc-server:latest
+
+    - name: Build and push grpc-gateway
+      uses: docker/build-push-action@v2
+      with:
+        context: ./grpc-gateway
+        file: ./grpc-gateway/Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository_owner }}/heroball/grpc-gateway:latest
