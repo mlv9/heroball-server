@@ -28,8 +28,11 @@ jobs:
         USERNAME: ${{ github.repository_owner }}
       run: git config --global url."https://${USERNAME}:${TOKEN}@github.com".insteadOf "https://github.com"
 
-    - name: Build
-      run: go build -v ./...
+    - name: Build grpc-server
+      run: cd grpc-server && go build -0 grpc-server -v .
+
+    - name: Build grpc-gateway
+      run: cd grpc-gateway && go build -0 grpc-gateway -v .
 
     - name: Test
       run: go test -v ./...
