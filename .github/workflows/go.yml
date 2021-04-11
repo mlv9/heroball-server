@@ -22,9 +22,9 @@ jobs:
     - name: Checkout Protobuf
       uses: actions/checkout@v2
       with:
-        repository: ''
-        ssh-key: '{{secrets.PROTOBUF_DEPLOY_KEY}}'
-        path: '/tmp'
+        repository: mlv9/protobuf
+        ref: master
+        ssh-key: ${{secrets.PROTOBUF_DEPLOY_KEY}}
         
     - name: Build
       run: go build -v ./...
