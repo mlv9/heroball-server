@@ -1,8 +1,8 @@
 
 version: '3'
 services:
-  gateway:
-    image: heroball-gateway:latest
+  grpc-gateway:
+    image: ghcr.io/mlv9/heroball/grpc-gateway:latest
     volumes:
     - /etc/letsencrypt/:/etc/letsencrypt/
     ports:
@@ -11,7 +11,7 @@ services:
     - grpc-server
 
   grpc-server:
-    image: heroball-grpc:latest
+    image: ghcr.io/mlv9/heroball/grpc-server:latest
     expose:
     - "8000"
     environment:
@@ -22,7 +22,7 @@ services:
       GRPC_BIND_ADDR: ":8000"
 
   db:
-    image: heroball-db:latest
+    image: ghcr.io/mlv9/heroball/db:latest
     expose: 
     - "5432"
     links:
