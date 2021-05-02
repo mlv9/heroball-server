@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	pb "github.com/mlv9/protobuf"
 
@@ -19,10 +21,31 @@ func main() {
 	mux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{OrigName: true, EmitDefaults: true}))
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err := pb.RegisterHeroBallServiceHandlerFromEndpoint(ctx, mux, "grpc-server:8000", opts)
+	serverLocation, exists := os.LookupEnv("GRPC_SERVER")
+
+	if !exists {
+		log.Fatal("Unable to locate GRPC_SERVER env")
+		return
+	}
+
+	serverPort, exists := os.LookupEnv("GRPC_PORT")
+
+	if !exists {
+		log.Fatal("Unable to locate GRPC_PORT env")
+		return
+	}
+
+	gatewayPort, exists := os.LookupEnv("GATEWAY_PORT")
+
+	if !exists {
+		log.Fatal("Unable to locate GATEWAY_PORT env")
+		return
+	}
+
+	err := pb.RegisterHeroBallServiceHandlerFromEndpoint(ctx, mux, fmt.Sprintf("%v:%v", serverLocation, serverPort), opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Fatal(http.ListenAndServeTLS(":443", "/etc/letsencrypt/live/api.heroball.xyz/fullchain.pem", "/etc/letsencrypt/live/api.heroball.xyz/privkey.pem", mux))
+	log.Fatal(http.ListenAndServe(gatewayPort, mux))
 }
