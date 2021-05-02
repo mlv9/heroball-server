@@ -35,10 +35,10 @@ func main() {
 		return
 	}
 
-	gatewayPort, exists := os.LookupEnv("GATEWAY_PORT")
+	gatewayBind, exists := os.LookupEnv("GATEWAY_BIND")
 
 	if !exists {
-		log.Fatal("Unable to locate GATEWAY_PORT env")
+		log.Fatal("Unable to locate GATEWAY_BIND env")
 		return
 	}
 
@@ -47,5 +47,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Fatal(http.ListenAndServe(gatewayPort, mux))
+	log.Fatal(http.ListenAndServe(gatewayBind, mux))
 }
