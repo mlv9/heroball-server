@@ -47,5 +47,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Printf("Binding GRPC to %v\n", gatewayBind)
+
 	log.Fatal(http.ListenAndServe(gatewayBind, mux))
 }
