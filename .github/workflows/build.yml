@@ -24,7 +24,7 @@ jobs:
 
     - name: Configure git for private golang modules
       env:
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         USERNAME: ${{ github.repository_owner }}
       run: git config --global url."https://${USERNAME}:${TOKEN}@github.com".insteadOf "https://github.com"
 
