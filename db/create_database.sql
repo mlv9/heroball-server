@@ -71,7 +71,7 @@ CREATE TABLE PlayerGameStats (
     MinutesPlayed int DEFAULT 0
 );
 
-DROP FUNCTION TotalPoints IF EXISTS;
+DROP FUNCTION IF EXISTS TotalPoints;
 CREATE FUNCTION TotalPoints(threes bigint, twos bigint, freeThrows bigint, out totalPoints bigint)
 AS $$ SELECT 
     COALESCE(threes*3, 0) + 
@@ -79,7 +79,7 @@ AS $$ SELECT
     COALESCE(freeThrows, 0) $$
 LANGUAGE SQL;
 
-DROP MATERIALIZED VIEW GameScoresView IF EXISTS;
+DROP MATERIALIZED VIEW IF EXISTS GameScoresView;
 
 CREATE MATERIALIZED VIEW GameScoresView AS
     SELECT
@@ -90,7 +90,7 @@ CREATE MATERIALIZED VIEW GameScoresView AS
     FROM
         Games;
 
-DROP MATERIALIZED VIEW CompetitionStandingsView IF EXISTS;
+DROP MATERIALIZED VIEW IF EXISTS CompetitionStandingsView;
 
 CREATE MATERIALIZED VIEW CompetitionStandingsView AS
     SELECT
